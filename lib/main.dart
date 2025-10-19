@@ -1,122 +1,287 @@
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(const CalistreetApp());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class CalistreetApp extends StatelessWidget {
+  const CalistreetApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // TRY THIS: Try running your application with "flutter run". You'll see
-        // the application has a purple toolbar. Then, without quitting the app,
-        // try changing the seedColor in the colorScheme below to Colors.green
-        // and then invoke "hot reload" (save your changes or press the "hot
-        // reload" button in a Flutter-supported IDE, or press "r" if you used
-        // the command line to start the app).
-        //
-        // Notice that the counter didn't reset back to zero; the application
-        // state is not lost during the reload. To reset the state, use hot
-        // restart instead.
-        //
-        // This works for code too, not just values: Most code changes can be
-        // tested with just a hot reload.
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+      title: 'Calistreet',
+      theme: ThemeData.dark().copyWith(
+        scaffoldBackgroundColor: const Color(0xFF1A1A1A),
+        primaryColor: const Color(0xFF007AFF),
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      home: const LoginScreen(),
+      debugShowCheckedModeBanner: false,
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
-  final String title;
+class LoginScreen extends StatefulWidget {
+  const LoginScreen({super.key});
 
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  State<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
+class _LoginScreenState extends State<LoginScreen> {
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  bool _isSignUp = true;
+  bool _isPasswordVisible = false;
 
-  void _incrementCounter() {
-    setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
-    });
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
     return Scaffold(
-      appBar: AppBar(
-        // TRY THIS: Try changing the color here to a specific color (to
-        // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
-        // change color while the other colors stay the same.
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
-      ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          //
-          // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
-          // action in the IDE, or press "p" in the console), to see the
-          // wireframe for each widget.
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text('You have pushed the button this many times:'),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-          ],
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // App Branding
+              const Text(
+                'Calistreet',
+                style: TextStyle(
+                  fontSize: 32,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Join our community',
+                style: TextStyle(fontSize: 16, color: Colors.white70),
+              ),
+              const SizedBox(height: 48),
+
+              // Input Fields
+              _buildInputField(
+                controller: _emailController,
+                hintText: 'Email',
+                icon: Icons.email_outlined,
+              ),
+              const SizedBox(height: 16),
+              _buildInputField(
+                controller: _passwordController,
+                hintText: 'Password',
+                icon: Icons.lock_outline,
+                isPassword: true,
+                isPasswordVisible: _isPasswordVisible,
+                onTogglePassword: () {
+                  setState(() {
+                    _isPasswordVisible = !_isPasswordVisible;
+                  });
+                },
+              ),
+              const SizedBox(height: 32),
+
+              // Primary Action Button
+              SizedBox(
+                width: double.infinity,
+                height: 50,
+                child: ElevatedButton(
+                  onPressed: _handlePrimaryAction,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF007AFF),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: Text(
+                    _isSignUp ? 'Sign Up' : 'Log In',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 32),
+
+              // Social Login Separator
+              Row(
+                children: [
+                  const Expanded(child: Divider(color: Colors.grey)),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Text(
+                      'Or ${_isSignUp ? 'sign up' : 'log in'} with',
+                      style: const TextStyle(color: Colors.grey),
+                    ),
+                  ),
+                  const Expanded(child: Divider(color: Colors.grey)),
+                ],
+              ),
+              const SizedBox(height: 24),
+
+              // Social Login Buttons
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildSocialButton(
+                      icon: FontAwesomeIcons.google,
+                      label: 'Google',
+                      onPressed: _handleGoogleLogin,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: _buildSocialButton(
+                      icon: FontAwesomeIcons.facebook,
+                      label: 'Facebook',
+                      onPressed: _handleFacebookLogin,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 32),
+
+              // Toggle Login/Signup
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    _isSignUp
+                        ? 'Already have an account?'
+                        : "Don't have an account?",
+                    style: const TextStyle(color: Colors.white70),
+                  ),
+                  TextButton(
+                    onPressed: _toggleMode,
+                    child: Text(
+                      _isSignUp ? 'Log in' : 'Sign up',
+                      style: const TextStyle(
+                        color: Color(0xFF007AFF),
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
     );
+  }
+
+  Widget _buildInputField({
+    required TextEditingController controller,
+    required String hintText,
+    required IconData icon,
+    bool isPassword = false,
+    bool isPasswordVisible = false,
+    VoidCallback? onTogglePassword,
+  }) {
+    return Container(
+      height: 50,
+      decoration: BoxDecoration(
+        color: const Color(0xFF2C2C2C),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: TextField(
+        controller: controller,
+        obscureText: isPassword && !isPasswordVisible,
+        style: const TextStyle(color: Colors.white),
+        decoration: InputDecoration(
+          hintText: hintText,
+          hintStyle: const TextStyle(color: Colors.grey),
+          prefixIcon: Icon(icon, color: Colors.grey),
+          suffixIcon: isPassword
+              ? IconButton(
+                  icon: Icon(
+                    isPasswordVisible ? Icons.visibility : Icons.visibility_off,
+                    color: Colors.grey,
+                  ),
+                  onPressed: onTogglePassword,
+                )
+              : null,
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 12,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSocialButton({
+    required IconData icon,
+    required String label,
+    required VoidCallback onPressed,
+  }) {
+    return Container(
+      height: 50,
+      decoration: BoxDecoration(
+        color: const Color(0xFF2C2C2C),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onPressed,
+          borderRadius: BorderRadius.circular(12),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                icon,
+                color: icon == FontAwesomeIcons.google
+                    ? Colors.red
+                    : const Color(0xFF1877F2),
+                size: 20,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                label,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _handlePrimaryAction() {
+    // TODO: Implementar authentication logic with db
+    print(
+      '${_isSignUp ? 'Sign Up' : 'Log In'} with email: ${_emailController.text}',
+    );
+  }
+
+  void _handleGoogleLogin() {
+    // TODO: Implementar Google authentication
+    print('Google login');
+  }
+
+  void _handleFacebookLogin() {
+    // TODO: Implementar Facebook authentication
+    print('Facebook login');
+  }
+
+  void _toggleMode() {
+    setState(() {
+      _isSignUp = !_isSignUp;
+    });
   }
 }
