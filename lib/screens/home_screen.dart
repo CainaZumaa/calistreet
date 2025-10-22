@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../services/auth_service.dart';
+import 'profile_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -17,6 +18,17 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     _setWelcomeMessage();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Resetar para Home quando volta de outra tela
+    if (ModalRoute.of(context)?.isCurrent == true) {
+      setState(() {
+        _selectedIndex = 0;
+      });
+    }
   }
 
   void _setWelcomeMessage() {
@@ -282,20 +294,41 @@ class _HomeScreenState extends State<HomeScreen> {
           setState(() {
             _selectedIndex = index;
           });
+          _navigateToScreen(index);
         },
         items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Início'),
           BottomNavigationBarItem(
             icon: Icon(Icons.fitness_center),
-            label: 'Treino',
+            label: 'Exercícios',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.bar_chart),
-            label: 'Progresso',
+            icon: Icon(FontAwesomeIcons.trophy),
+            label: 'Desafios',
           ),
           BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Perfil'),
         ],
       ),
     );
+  }
+
+  void _navigateToScreen(int index) {
+    switch (index) {
+      case 0:
+        // Já está na tela home - não fazer nada
+        break;
+      case 1:
+        // TODO: Navegar para Exercícios
+        break;
+      case 2:
+        // TODO: Navegar para Desafios
+        break;
+      case 3:
+        Navigator.of(
+          context,
+        ).push(MaterialPageRoute(builder: (context) => const ProfileScreen()));
+        break;
+    }
   }
 
   void _handleLogout() async {
