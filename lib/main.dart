@@ -1,9 +1,56 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'services/auth_service.dart';
+import 'screens/home_screen.dart';
 
-void main() {
-  runApp(const CalistreetApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  try {
+    await dotenv.load(fileName: ".env");
+    await AuthService.initialize();
+    runApp(const CalistreetApp());
+  } catch (e) {
+    runApp(
+      MaterialApp(
+        home: Scaffold(
+          backgroundColor: const Color(0xFF1A1A1A),
+          body: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.error, color: Colors.red, size: 64),
+                const SizedBox(height: 16),
+                const Text(
+                  'Erro de Conexão',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Erro: $e',
+                  style: const TextStyle(color: Colors.white70, fontSize: 16),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: () {
+                    // Tentar reinicializar
+                    main();
+                  },
+                  child: const Text('Tentar Novamente'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class CalistreetApp extends StatelessWidget {
@@ -17,9 +64,24 @@ class CalistreetApp extends StatelessWidget {
         scaffoldBackgroundColor: const Color(0xFF1A1A1A),
         primaryColor: const Color(0xFF007AFF),
       ),
-      home: const LoginScreen(),
+      home: const AuthWrapper(),
       debugShowCheckedModeBanner: false,
     );
+  }
+}
+
+class AuthWrapper extends StatelessWidget {
+  const AuthWrapper({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final user = AuthService.currentUser;
+
+    if (user != null) {
+      return const HomeScreen();
+    } else {
+      return const LoginScreen();
+    }
   }
 }
 
@@ -63,7 +125,7 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
               const SizedBox(height: 8),
               const Text(
-                'Join our community',
+                'Junte-se à nossa comunidade',
                 style: TextStyle(fontSize: 16, color: Colors.white70),
               ),
               const SizedBox(height: 48),
@@ -71,13 +133,13 @@ class _LoginScreenState extends State<LoginScreen> {
               // Input Fields
               _buildInputField(
                 controller: _emailController,
-                hintText: 'Email',
+                hintText: 'E-mail',
                 icon: Icons.email_outlined,
               ),
               const SizedBox(height: 16),
               _buildInputField(
                 controller: _passwordController,
-                hintText: 'Password',
+                hintText: 'Senha',
                 icon: Icons.lock_outline,
                 isPassword: true,
                 isPasswordVisible: _isPasswordVisible,
@@ -102,7 +164,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                   child: Text(
-                    _isSignUp ? 'Sign Up' : 'Log In',
+                    _isSignUp ? 'Cadastrar' : 'Entrar',
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
@@ -120,7 +182,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: Text(
-                      'Or ${_isSignUp ? 'sign up' : 'log in'} with',
+                      'Ou ${_isSignUp ? 'cadastre-se' : 'entre'} com',
                       style: const TextStyle(color: Colors.grey),
                     ),
                   ),
@@ -156,15 +218,13 @@ class _LoginScreenState extends State<LoginScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    _isSignUp
-                        ? 'Already have an account?'
-                        : "Don't have an account?",
+                    _isSignUp ? 'Já tem uma conta?' : "Não tem uma conta?",
                     style: const TextStyle(color: Colors.white70),
                   ),
                   TextButton(
                     onPressed: _toggleMode,
                     child: Text(
-                      _isSignUp ? 'Log in' : 'Sign up',
+                      _isSignUp ? 'Entrar' : 'Cadastrar',
                       style: const TextStyle(
                         color: Color(0xFF007AFF),
                         fontWeight: FontWeight.w600,
@@ -262,10 +322,54 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  void _handlePrimaryAction() {
-    // TODO: Implementar authentication logic with db
-    print(
-      '${_isSignUp ? 'Sign Up' : 'Log In'} with email: ${_emailController.text}',
+  void _handlePrimaryAction() async {
+    if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
+      _showSnackBar('Por favor, preencha todos os campos');
+      return;
+    }
+
+    try {
+      if (_isSignUp) {
+        final result = await AuthService.signUp(
+          email: _emailController.text,
+          password: _passwordController.text,
+        );
+        AuthService.setCurrentUser(result);
+        _showSnackBar('Usuário criado! Bem-vindo ao Calistreet!');
+        _navigateToHome();
+      } else {
+        final result = await AuthService.signIn(
+          email: _emailController.text,
+          password: _passwordController.text,
+        );
+        AuthService.setCurrentUser(result);
+        _showSnackBar('Bem-vindo de volta!');
+        _navigateToHome();
+      }
+    } catch (e) {
+      String errorMessage = 'Erro desconhecido';
+
+      if (e.toString().contains('Invalid login credentials')) {
+        errorMessage = 'Email ou senha incorretos';
+      } else if (e.toString().contains('User already registered')) {
+        errorMessage = 'Este email já está cadastrado';
+      } else if (e.toString().contains('Password should be at least')) {
+        errorMessage = 'Senha deve ter pelo menos 6 caracteres';
+      } else if (e.toString().contains('Invalid email')) {
+        errorMessage = 'Email inválido';
+      } else if (e.toString().contains('422')) {
+        errorMessage = 'Erro de validação - verifique os dados';
+      } else {
+        errorMessage = 'Erro: $e';
+      }
+
+      _showSnackBar(errorMessage);
+    }
+  }
+
+  void _navigateToHome() {
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(builder: (context) => const HomeScreen()),
     );
   }
 
@@ -283,5 +387,14 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() {
       _isSignUp = !_isSignUp;
     });
+  }
+
+  void _showSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: const Color(0xFF2C2C2C),
+      ),
+    );
   }
 }
