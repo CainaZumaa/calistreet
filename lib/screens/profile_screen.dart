@@ -23,9 +23,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
         .join(' ');
 
     return Scaffold(
-      backgroundColor: const Color(0xFF1A1A1A),
+      backgroundColor: const Color(0xFF000000),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF1A1A1A),
+        backgroundColor: const Color(0xFF000000),
         title: const Text(
           'Perfil',
           style: TextStyle(
@@ -133,7 +133,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF2C2C2C),
+        color: const Color(0xFF000000),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
@@ -264,7 +264,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF2C2C2C),
+        color: const Color(0xFF000000),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -325,13 +325,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget _buildBottomNavigation() {
     return Container(
       decoration: const BoxDecoration(
-        color: Color(0xFF1A1A1A),
-        border: Border(top: BorderSide(color: Color(0xFF2C2C2C), width: 1)),
+        color: Color(0xFF000000),
+        border: Border(top: BorderSide(color: Color(0xFF1A1A1A), width: 1)),
       ),
       child: BottomNavigationBar(
-        backgroundColor: const Color(0xFF1A1A1A),
+        backgroundColor: const Color(0xFF000000),
         selectedItemColor: const Color(0xFF007AFF),
-        unselectedItemColor: Colors.white,
+        unselectedItemColor: Colors.grey,
         currentIndex: _selectedIndex,
         onTap: (index) {
           setState(() {
@@ -342,8 +342,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Início'),
           BottomNavigationBarItem(
-            icon: Icon(Icons.fitness_center),
-            label: 'Exercícios',
+            icon: Icon(Icons.trending_up),
+            label: 'Progresso',
           ),
           BottomNavigationBarItem(
             icon: Icon(FontAwesomeIcons.trophy),

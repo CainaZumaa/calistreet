@@ -12,12 +12,39 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
-  String _welcomeMessage = '';
+  String _welcomeMessage = 'Olá, Usuário!';
+  Map<String, dynamic>? _userProfile;
+  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _setWelcomeMessage();
+    _loadUserData();
+  }
+
+  void _loadUserData() async {
+    final userData = AuthService.currentUser;
+    if (userData != null) {
+      final userId = userData['user_id'] as String;
+      
+      // 1. Buscar dados do perfil
+      final profile = await AuthService.fetchUserProfile(userId);
+
+      setState(() {
+        _isLoading = false;
+        _userProfile = profile;
+        
+        // 2. Mensagem de boas-vindas com o Nome
+        if (profile != null && profile.containsKey('name')) {
+          _welcomeMessage = 'Olá, ${profile['name'].toString().split(' ')[0]}!';
+        }
+      });
+    } else {
+      setState(() {
+        _isLoading = false;
+        _welcomeMessage = 'Olá, Usuário!';
+      });
+    }
   }
 
   @override
@@ -31,23 +58,12 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  void _setWelcomeMessage() {
-    final userData = AuthService.currentUser;
-    if (userData != null) {
-      final email = userData['email'] ?? 'Usuário';
-      final userName = email.split('@')[0];
-      _welcomeMessage = 'Olá, $userName!';
-    } else {
-      _welcomeMessage = 'Olá, Usuário!';
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF1A1A1A),
+      backgroundColor: const Color(0xFF000000),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF1A1A1A),
+        backgroundColor: const Color(0xFF000000),
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.menu, color: Colors.white),
@@ -76,19 +92,21 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildTodayWorkoutCard(),
-            const SizedBox(height: 24),
-            _buildChallengesCard(),
-            const SizedBox(height: 16),
-            _buildCustomWorkoutCard(),
-          ],
-        ),
-      ),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator(color: Color(0xFF007AFF)))
+          : SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildTodayWorkoutCard(),
+                  const SizedBox(height: 24),
+                  _buildChallengesCard(),
+                  const SizedBox(height: 16),
+                  _buildCustomWorkoutCard(),
+                ],
+              ),
+            ),
       bottomNavigationBar: _buildBottomNavigation(),
     );
   }
@@ -99,29 +117,26 @@ class _HomeScreenState extends State<HomeScreen> {
       height: 200,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
-        gradient: const LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [Color(0xFFFF6B35), Color(0xFF1A1A1A)],
-          stops: [0.4, 0.4],
-        ),
+        color: const Color(0xFF1E1E1E),
       ),
       child: Stack(
         children: [
+          // Imagem/Ilustração (Placeholder Simples)
           Positioned(
-            top: 20,
-            right: 20,
-            child: Container(
-              width: 80,
-              height: 80,
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.2),
-                shape: BoxShape.circle,
+            top: 0,
+            left: 0,
+            right: 0,
+            child: ClipRRect(
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(16),
+                topRight: Radius.circular(16),
               ),
-              child: const Icon(
-                Icons.fitness_center,
-                color: Colors.white,
-                size: 40,
+              child: Container(
+                height: 100, 
+                color: Colors.blueGrey.shade900,
+                child: const Center(
+                  child: Icon(Icons.directions_run, color: Colors.white54, size: 48),
+                ),
               ),
             ),
           ),
@@ -192,7 +207,7 @@ class _HomeScreenState extends State<HomeScreen> {
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color(0xFF2C2C2C),
+        color: const Color(0xFF1A1A1A),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Row(
@@ -240,7 +255,7 @@ class _HomeScreenState extends State<HomeScreen> {
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color(0xFF2C2C2C),
+        color: const Color(0xFF1A1A1A),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Row(
@@ -286,9 +301,9 @@ class _HomeScreenState extends State<HomeScreen> {
         border: Border(top: BorderSide(color: Color(0xFF2C2C2C), width: 1)),
       ),
       child: BottomNavigationBar(
-        backgroundColor: const Color(0xFF1A1A1A),
+        backgroundColor:const Color(0xFF000000),
         selectedItemColor: const Color(0xFF007AFF),
-        unselectedItemColor: Colors.white,
+        unselectedItemColor: Colors.grey,
         currentIndex: _selectedIndex,
         onTap: (index) {
           setState(() {
@@ -299,8 +314,8 @@ class _HomeScreenState extends State<HomeScreen> {
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Início'),
           BottomNavigationBarItem(
-            icon: Icon(Icons.fitness_center),
-            label: 'Exercícios',
+            icon: Icon(Icons.trending_up),
+            label: 'Progresso',
           ),
           BottomNavigationBarItem(
             icon: Icon(FontAwesomeIcons.trophy),
