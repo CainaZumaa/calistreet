@@ -7,7 +7,7 @@ import '../config/supabase_config.dart';
 class AuthService {
   static SupabaseClient? _supabase;
 
-  static supabase_core.SupabaseClient _createServiceRoleClient() {
+  static supabase_core.SupabaseClient createServiceRoleClient() {
     return supabase_core.SupabaseClient(
       SupabaseConfig.url,
       SupabaseConfig.serviceRoleKey,
@@ -30,7 +30,6 @@ class AuthService {
     );
   }
 
-  // Função para hash da senha
   static String _hashPassword(String password) {
     final bytes = utf8.encode(password);
     final digest = sha256.convert(bytes);
@@ -40,10 +39,11 @@ class AuthService {
   static Future<Map<String, dynamic>> signUp({
     required String email,
     required String password,
+    required String name,
   }) async {
     try {
       final hashedPassword = _hashPassword(password);
-      final serviceClient = _createServiceRoleClient();
+      final serviceClient = createServiceRoleClient(); // Usa a função pública
 
       final result = await serviceClient.from('users').insert({
         'email': email,
@@ -56,6 +56,7 @@ class AuthService {
           'success': true,
           'user_id': user['id'],
           'email': user['email'],
+          'name': name,
           'created_at': user['created_at'],
           'message': 'Conta criada com sucesso!',
         };
@@ -73,7 +74,7 @@ class AuthService {
   }) async {
     try {
       final hashedPassword = _hashPassword(password);
-      final serviceClient = _createServiceRoleClient();
+      final serviceClient = createServiceRoleClient(); // Usa a função pública
 
       final userData = await serviceClient
           .from('users')
@@ -95,6 +96,26 @@ class AuthService {
       }
     } catch (e) {
       throw Exception('Erro ao fazer login: $e');
+    }
+  }
+
+  static Future<Map<String, dynamic>?> fetchUserProfile(String userId) async {
+    try {
+      final serviceClient = createServiceRoleClient();
+      
+      final profileData = await serviceClient
+          .from('user_profiles')
+          .select('*')
+          .eq('user_id', userId)
+          .single(); 
+      
+      // Converte o PostgrestMap (Map<String, dynamic>) para Map<String, dynamic>
+      return profileData as Map<String, dynamic>;
+      
+    } catch (e) {
+      // Se a busca falhar (ex: perfil não existe ou erro de conexão), retorna null
+      print('Erro ao buscar perfil: $e');
+      return null;
     }
   }
 

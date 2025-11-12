@@ -1,8 +1,11 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'services/auth_service.dart';
 import 'screens/home_screen.dart';
+import 'screens/onboarding/personal_info_screen.dart';
+import 'models/user_onboarding_data.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -93,13 +96,16 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
+  final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  bool _isSignUp = true;
+  bool _isSignUp = false;
   bool _isPasswordVisible = false;
-
+  bool _agreedToTerms = false;
+  
   @override
   void dispose() {
+    _nameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
@@ -108,8 +114,9 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFF000000),
       body: SafeArea(
-        child: Padding(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.all(24.0),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -124,22 +131,31 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
               ),
               const SizedBox(height: 8),
-              const Text(
-                'Junte-se à nossa comunidade',
-                style: TextStyle(fontSize: 16, color: Colors.white70),
+              Text(
+                _isSignUp ? 'Insira seus dados para começar.' : 'Junte-se à nossa comunidade',
+                style: const TextStyle(fontSize: 16, color: Colors.white70),
               ),
               const SizedBox(height: 48),
 
-              // Input Fields
+              // Nome (Visível apenas em Cadastro)
+              if (_isSignUp)
+                _buildInputField(
+                  controller: _nameController,
+                  hintText: 'Seu nome completo',
+                  icon: Icons.person_outline,
+                ),
+              if (_isSignUp) const SizedBox(height: 16),
+              
+              // Input Fields: Email e Senha
               _buildInputField(
                 controller: _emailController,
-                hintText: 'E-mail',
+                hintText: _isSignUp ? 'seuemail@exemplo.com' : 'E-mail',
                 icon: Icons.email_outlined,
               ),
               const SizedBox(height: 16),
               _buildInputField(
                 controller: _passwordController,
-                hintText: 'Senha',
+                hintText: _isSignUp ? 'Crie uma senha forte' : 'Senha',
                 icon: Icons.lock_outline,
                 isPassword: true,
                 isPasswordVisible: _isPasswordVisible,
@@ -150,6 +166,13 @@ class _LoginScreenState extends State<LoginScreen> {
                 },
               ),
               const SizedBox(height: 32),
+
+              // CHECKBOX: Termos (Visível apenas em Cadastro)
+              if (_isSignUp)
+                _buildTermsCheckbox(),
+              if (_isSignUp) const SizedBox(height: 16),
+
+              const SizedBox(height: 16),
 
               // Primary Action Button
               SizedBox(
@@ -244,40 +267,98 @@ class _LoginScreenState extends State<LoginScreen> {
     required TextEditingController controller,
     required String hintText,
     required IconData icon,
+    String label = '',
     bool isPassword = false,
     bool isPasswordVisible = false,
     VoidCallback? onTogglePassword,
   }) {
-    return Container(
-      height: 50,
-      decoration: BoxDecoration(
-        color: const Color(0xFF2C2C2C),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: TextField(
-        controller: controller,
-        obscureText: isPassword && !isPasswordVisible,
-        style: const TextStyle(color: Colors.white),
-        decoration: InputDecoration(
-          hintText: hintText,
-          hintStyle: const TextStyle(color: Colors.grey),
-          prefixIcon: Icon(icon, color: Colors.grey),
-          suffixIcon: isPassword
-              ? IconButton(
-                  icon: Icon(
-                    isPasswordVisible ? Icons.visibility : Icons.visibility_off,
-                    color: Colors.grey,
-                  ),
-                  onPressed: onTogglePassword,
-                )
-              : null,
-          border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 12,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (label.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8.0),
+            child: Text(label, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500)),
+          ),
+        Container(
+          height: 50,
+          decoration: BoxDecoration(
+            color: const Color(0xFF2C2C2C),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: TextField(
+            controller: controller,
+            obscureText: isPassword && !isPasswordVisible,
+            style: const TextStyle(color: Colors.white),
+            decoration: InputDecoration(
+              hintText: hintText,
+              hintStyle: const TextStyle(color: Colors.grey),
+              prefixIcon: Icon(icon, color: Colors.grey),
+              suffixIcon: isPassword
+                  ? IconButton(
+                      icon: Icon(
+                        isPasswordVisible ? Icons.visibility : Icons.visibility_off,
+                        color: Colors.grey,
+                      ),
+                      onPressed: onTogglePassword,
+                    )
+                  : null,
+              border: InputBorder.none,
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 12,
+              ),
+            ),
           ),
         ),
-      ),
+      ],
+    );
+  }
+
+  // Checkbox de termos
+  Widget _buildTermsCheckbox() {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          width: 24,
+          height: 24,
+          child: Checkbox(
+            value: _agreedToTerms,
+            onChanged: (bool? newValue) {
+              setState(() {
+                _agreedToTerms = newValue ?? false;
+              });
+            },
+            activeColor: const Color(0xFF4CAF50),
+            checkColor: Colors.black,
+            side: const BorderSide(color: Color(0xFF404040), width: 2),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: RichText(
+            text: TextSpan(
+              text: 'Eu concordo com os ',
+              style: const TextStyle(color: Colors.white, fontSize: 14),
+              children: [
+                TextSpan(
+                  text: 'Termos de Uso',
+                  style: const TextStyle(color: Color(0xFF4CAF50), decoration: TextDecoration.underline),
+                  recognizer: TapGestureRecognizer()..onTap = () { /* TODO: Abrir Termos */ },
+                ),
+                const TextSpan(text: ' e ', style: TextStyle(color: Colors.white)),
+                TextSpan(
+                  text: 'Política de Privacidade.',
+                  style: const TextStyle(color: Color(0xFF4CAF50), decoration: TextDecoration.underline),
+                  recognizer: TapGestureRecognizer()..onTap = () { /* TODO: Abrir Política */ },
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -327,40 +408,73 @@ class _LoginScreenState extends State<LoginScreen> {
       _showSnackBar('Por favor, preencha todos os campos');
       return;
     }
-
-    try {
-      if (_isSignUp) {
+    
+    // Cadastro
+    if (_isSignUp) {
+      if (_nameController.text.isEmpty) {
+        _showSnackBar('O campo Nome é obrigatório.');
+        return;
+      }
+      if (!_agreedToTerms) {
+        _showSnackBar('Você deve concordar com os Termos de Uso e Privacidade.');
+        return;
+      }
+      
+      try {
         final result = await AuthService.signUp(
           email: _emailController.text,
           password: _passwordController.text,
+          name: _nameController.text,
         );
         AuthService.setCurrentUser(result);
-        _showSnackBar('Usuário criado! Bem-vindo ao Calistreet!');
-        _navigateToHome();
-      } else {
-        final result = await AuthService.signIn(
-          email: _emailController.text,
-          password: _passwordController.text,
+        
+        _showSnackBar('Usuário criado! Iniciando Onboarding...');
+        
+        // Inicia o Onboarding, passando o nome para o DTO
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+            builder: (context) => PersonalInfoScreen(
+              onboardingData: UserOnboardingData(
+                name: _nameController.text,
+              ), 
+            ),
+          ),
         );
-        AuthService.setCurrentUser(result);
-        _showSnackBar('Bem-vindo de volta!');
-        _navigateToHome();
+        
+      } catch (e) {
+        String errorMessage = 'Erro desconhecido';
+
+        if (e.toString().contains('User already registered')) {
+          errorMessage = 'Este email já está cadastrado';
+        } else if (e.toString().contains('Password should be at least')) {
+          errorMessage = 'Senha deve ter pelo menos 6 caracteres';
+        } else if (e.toString().contains('Invalid email')) {
+          errorMessage = 'Email inválido';
+        } else {
+          errorMessage = 'Erro: ${e.toString()}';
+        }
+
+        _showSnackBar(errorMessage);
       }
+      return;
+    }
+
+    // Login
+    try {
+      final result = await AuthService.signIn(
+        email: _emailController.text,
+        password: _passwordController.text,
+      );
+      AuthService.setCurrentUser(result);
+      _showSnackBar('Bem-vindo de volta!');
+      _navigateToHome();
     } catch (e) {
       String errorMessage = 'Erro desconhecido';
 
-      if (e.toString().contains('Invalid login credentials')) {
+      if (e.toString().contains('Email ou senha incorretos')) {
         errorMessage = 'Email ou senha incorretos';
-      } else if (e.toString().contains('User already registered')) {
-        errorMessage = 'Este email já está cadastrado';
-      } else if (e.toString().contains('Password should be at least')) {
-        errorMessage = 'Senha deve ter pelo menos 6 caracteres';
-      } else if (e.toString().contains('Invalid email')) {
-        errorMessage = 'Email inválido';
-      } else if (e.toString().contains('422')) {
-        errorMessage = 'Erro de validação - verifique os dados';
       } else {
-        errorMessage = 'Erro: $e';
+        errorMessage = 'Erro: ${e.toString()}';
       }
 
       _showSnackBar(errorMessage);
@@ -393,7 +507,8 @@ class _LoginScreenState extends State<LoginScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: const Color(0xFF2C2C2C),
+        backgroundColor: const Color(0xFF1877F2),
+        duration: const Duration(seconds: 5),
       ),
     );
   }
