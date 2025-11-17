@@ -1,7 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../services/auth_service.dart';
+import 'create_workout_screen.dart';
 import 'profile_screen.dart';
+import 'progress_screen.dart';
+import 'workout_in_progress_screen.dart';
+import 'my_workouts_screen.dart';
+import 'package:intl/intl.dart'; 
+import '../services/workout_service.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -14,12 +20,14 @@ class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
   String _welcomeMessage = 'Olá, Usuário!';
   Map<String, dynamic>? _userProfile;
+  Map<String, dynamic>? _todaysWorkout;
   bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
     _loadUserData();
+    _loadTodaysWorkout();
   }
 
   void _loadUserData() async {
@@ -45,6 +53,34 @@ class _HomeScreenState extends State<HomeScreen> {
         _welcomeMessage = 'Olá, Usuário!';
       });
     }
+  }
+
+  // Determina o treino do dia
+  void _loadTodaysWorkout() async {
+    final userId = AuthService.currentUser?['user_id'];
+    if (userId == null) return;
+    
+    // 1. Obtém o dia atual em formato de 3 letras (ex: 'seg', 'ter', 'sáb')
+    // É CRUCIAL USAR 'pt_BR' para corresponder aos dados salvos no banco.
+    final currentDayName = DateFormat('EEE', 'pt_BR').format(DateTime.now()); 
+    final String dayAbbr = currentDayName.substring(0, 3); // Obtém as 3 primeiras letras
+    
+    // 2. Formata para o padrão (Ex: 'Seg', 'Ter')
+    final String finalDayFilter = dayAbbr.substring(0, 1).toUpperCase() + dayAbbr.substring(1);
+
+    // ************** DEBUG CRÍTICO **************
+    print('DEBUG: Filtrando por User ID: $userId e Dia: $finalDayFilter');
+
+    final WorkoutService service = WorkoutService();
+
+    // Busca o treino agendado para o dia de hoje
+    // A função retorna List<Map<...>>
+    final List<Map<String, dynamic>> workouts = await service.fetchUserWorkoutsByDay(userId as String, finalDayFilter);
+
+    setState(() {
+      // Atribui o primeiro treino encontrado à variável de estado, ou null se a lista estiver vazia.
+      _todaysWorkout = workouts.isNotEmpty ? workouts.first : null;
+    });
   }
 
   @override
@@ -100,10 +136,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _buildTodayWorkoutCard(),
-                  const SizedBox(height: 24),
-                  _buildChallengesCard(),
                   const SizedBox(height: 16),
                   _buildCustomWorkoutCard(),
+                  const SizedBox(height: 16),
+                  _buildMyWorkoutsCard(),
                 ],
               ),
             ),
@@ -112,6 +148,11 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildTodayWorkoutCard() {
+    if (_todaysWorkout == null) {
+      return const SizedBox.shrink(); // Não mostra card se não houver treino agendado
+    }
+    
+    final String workoutName = _todaysWorkout!['name'] ?? 'Treino Agendado';
     return Container(
       width: double.infinity,
       height: 200,
@@ -156,9 +197,9 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Treino de Hoje',
-                    style: TextStyle(
+                  Text(
+                    workoutName,
+                    style: const TextStyle(
                       color: Colors.white,
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
@@ -166,12 +207,12 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   const SizedBox(height: 8),
                   const Text(
-                    'Foco em Pernas e Core',
+                    'Agendado para hoje. Mantenha o foco!',
                     style: TextStyle(color: Colors.white70, fontSize: 14),
                   ),
                   const SizedBox(height: 8),
                   const Text(
-                    'Duração: 45 min',
+                    'Duração: Estimada',
                     style: TextStyle(color: Colors.white70, fontSize: 14),
                   ),
                   const SizedBox(height: 16),
@@ -179,7 +220,14 @@ class _HomeScreenState extends State<HomeScreen> {
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
                       ElevatedButton(
-                        onPressed: () {},
+                        onPressed: () {
+                          // Navega para a tela de treino em andamento
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => const WorkoutInProgressScreen(),
+                            ),
+                          );
+                        },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF007AFF),
                           shape: RoundedRectangleBorder(
@@ -202,94 +250,106 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildChallengesCard() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1A1A1A),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Desafios',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
+  Widget _buildMyWorkoutsCard() {
+    return GestureDetector(
+      onTap: () {
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (context) => const MyWorkoutsScreen()),
+        );
+      },
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: const Color(0xFF1A1A1A),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: const [
+                  Text(
+                    'Meus Treinos',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 8),
-                const Text(
-                  'Participe e supere-se.',
-                  style: TextStyle(color: Colors.white70, fontSize: 14),
-                ),
-              ],
+                  SizedBox(height: 4),
+                  Text(
+                    'Visualize, edite e organize suas rotinas.',
+                    style: TextStyle(color: Colors.white70, fontSize: 14),
+                  ),
+                ],
+              ),
             ),
-          ),
-          Container(
-            width: 50,
-            height: 50,
-            decoration: const BoxDecoration(
-              color: Color(0xFF007AFF),
-              shape: BoxShape.circle,
+            Container(
+              width: 50,
+              height: 50,
+              decoration: const BoxDecoration(
+                color: Color(0xFF007AFF),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.list_alt, color: Colors.white, size: 24),
             ),
-            child: const Icon(
-              FontAwesomeIcons.trophy,
-              color: Colors.white,
-              size: 20,
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildCustomWorkoutCard() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1A1A1A),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Monte seu Treino',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
+    return GestureDetector(
+      onTap: () {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => const CreateWorkoutScreen(),
+          ),
+        );
+      },
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: const Color(0xFF1A1A1A),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Monte seu Treino',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 8),
-                const Text(
-                  'Crie um plano personalizado.',
-                  style: TextStyle(color: Colors.white70, fontSize: 14),
-                ),
-              ],
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Crie um plano personalizado.',
+                    style: TextStyle(color: Colors.white70, fontSize: 14),
+                  ),
+                ],
+              ),
             ),
-          ),
-          Container(
-            width: 50,
-            height: 50,
-            decoration: const BoxDecoration(
-              color: Color(0xFF007AFF),
-              shape: BoxShape.circle,
+            Container(
+              width: 50,
+              height: 50,
+              decoration: const BoxDecoration(
+                color: Color(0xFF007AFF),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.add, color: Colors.white, size: 24),
             ),
-            child: const Icon(Icons.add, color: Colors.white, size: 24),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -333,7 +393,9 @@ class _HomeScreenState extends State<HomeScreen> {
         // Já está na tela home - não fazer nada
         break;
       case 1:
-        // TODO: Navegar para Exercícios
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (context) => const ProgressScreen()),
+        );
         break;
       case 2:
         // TODO: Navegar para Desafios
