@@ -6,10 +6,17 @@ import 'services/auth_service.dart';
 import 'screens/home_screen.dart';
 import 'screens/onboarding/personal_info_screen.dart';
 import 'models/user_onboarding_data.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  try {
+    await initializeDateFormatting('pt_BR', null); 
+  } catch (e) {
+    print('Erro ao inicializar locale: $e');
+  }
+  
   try {
     await dotenv.load(fileName: ".env");
     await AuthService.initialize();
