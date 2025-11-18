@@ -7,21 +7,47 @@ import 'screens/home_screen.dart';
 import 'screens/onboarding/personal_info_screen.dart';
 import 'models/user_onboarding_data.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'utils/logger.dart';
+import 'utils/error_handler.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   try {
-    await initializeDateFormatting('pt_BR', null); 
-  } catch (e) {
-    print('Erro ao inicializar locale: $e');
+    Logger.info('Main', 'Inicializando aplicação...');
+    await initializeDateFormatting('pt_BR', null);
+    Logger.debug('Main', 'Locale pt_BR inicializado');
+  } catch (e, stackTrace) {
+    Logger.warning(
+      'Main',
+      'Erro ao inicializar locale - continuando sem formatação de data',
+      error: e,
+      stackTrace: stackTrace,
+    );
   }
-  
+
   try {
+    Logger.debug('Main', 'Carregando variáveis de ambiente...');
     await dotenv.load(fileName: ".env");
+    Logger.debug('Main', 'Variáveis de ambiente carregadas');
+
     await AuthService.initialize();
+    Logger.info('Main', 'Aplicação inicializada com sucesso');
     runApp(const CalistreetApp());
-  } catch (e) {
+  } catch (e, stackTrace) {
+    Logger.error(
+      'Main',
+      'Falha crítica na inicialização da aplicação',
+      error: e,
+      stackTrace: stackTrace,
+    );
+
+    final userMessage = ErrorHandler.handleError(
+      e,
+      stackTrace: stackTrace,
+      context: 'main',
+    );
+
     runApp(
       MaterialApp(
         home: Scaffold(
@@ -41,15 +67,18 @@ void main() async {
                   ),
                 ),
                 const SizedBox(height: 8),
-                Text(
-                  'Erro: $e',
-                  style: const TextStyle(color: Colors.white70, fontSize: 16),
-                  textAlign: TextAlign.center,
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 32),
+                  child: Text(
+                    userMessage,
+                    style: const TextStyle(color: Colors.white70, fontSize: 16),
+                    textAlign: TextAlign.center,
+                  ),
                 ),
                 const SizedBox(height: 16),
                 ElevatedButton(
                   onPressed: () {
-                    // Tentar reinicializar
+                    Logger.info('Main', 'Tentando reinicializar aplicação...');
                     main();
                   },
                   child: const Text('Tentar Novamente'),
@@ -109,7 +138,7 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _isSignUp = false;
   bool _isPasswordVisible = false;
   bool _agreedToTerms = false;
-  
+
   @override
   void dispose() {
     _nameController.dispose();
@@ -139,7 +168,9 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
               const SizedBox(height: 8),
               Text(
-                _isSignUp ? 'Insira seus dados para começar.' : 'Junte-se à nossa comunidade',
+                _isSignUp
+                    ? 'Insira seus dados para começar.'
+                    : 'Junte-se à nossa comunidade',
                 style: const TextStyle(fontSize: 16, color: Colors.white70),
               ),
               const SizedBox(height: 48),
@@ -152,7 +183,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   icon: Icons.person_outline,
                 ),
               if (_isSignUp) const SizedBox(height: 16),
-              
+
               // Input Fields: Email e Senha
               _buildInputField(
                 controller: _emailController,
@@ -175,8 +206,7 @@ class _LoginScreenState extends State<LoginScreen> {
               const SizedBox(height: 32),
 
               // CHECKBOX: Termos (Visível apenas em Cadastro)
-              if (_isSignUp)
-                _buildTermsCheckbox(),
+              if (_isSignUp) _buildTermsCheckbox(),
               if (_isSignUp) const SizedBox(height: 16),
 
               const SizedBox(height: 16),
@@ -285,7 +315,13 @@ class _LoginScreenState extends State<LoginScreen> {
         if (label.isNotEmpty)
           Padding(
             padding: const EdgeInsets.only(bottom: 8.0),
-            child: Text(label, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500)),
+            child: Text(
+              label,
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
           ),
         Container(
           height: 50,
@@ -304,7 +340,9 @@ class _LoginScreenState extends State<LoginScreen> {
               suffixIcon: isPassword
                   ? IconButton(
                       icon: Icon(
-                        isPasswordVisible ? Icons.visibility : Icons.visibility_off,
+                        isPasswordVisible
+                            ? Icons.visibility
+                            : Icons.visibility_off,
                         color: Colors.grey,
                       ),
                       onPressed: onTogglePassword,
@@ -340,7 +378,9 @@ class _LoginScreenState extends State<LoginScreen> {
             activeColor: const Color(0xFF4CAF50),
             checkColor: Colors.black,
             side: const BorderSide(color: Color(0xFF404040), width: 2),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(4),
+            ),
           ),
         ),
         const SizedBox(width: 8),
@@ -352,14 +392,29 @@ class _LoginScreenState extends State<LoginScreen> {
               children: [
                 TextSpan(
                   text: 'Termos de Uso',
-                  style: const TextStyle(color: Color(0xFF4CAF50), decoration: TextDecoration.underline),
-                  recognizer: TapGestureRecognizer()..onTap = () { /* TODO: Abrir Termos */ },
+                  style: const TextStyle(
+                    color: Color(0xFF4CAF50),
+                    decoration: TextDecoration.underline,
+                  ),
+                  recognizer: TapGestureRecognizer()
+                    ..onTap = () {
+                      /* TODO: Abrir Termos */
+                    },
                 ),
-                const TextSpan(text: ' e ', style: TextStyle(color: Colors.white)),
+                const TextSpan(
+                  text: ' e ',
+                  style: TextStyle(color: Colors.white),
+                ),
                 TextSpan(
                   text: 'Política de Privacidade.',
-                  style: const TextStyle(color: Color(0xFF4CAF50), decoration: TextDecoration.underline),
-                  recognizer: TapGestureRecognizer()..onTap = () { /* TODO: Abrir Política */ },
+                  style: const TextStyle(
+                    color: Color(0xFF4CAF50),
+                    decoration: TextDecoration.underline,
+                  ),
+                  recognizer: TapGestureRecognizer()
+                    ..onTap = () {
+                      /* TODO: Abrir Política */
+                    },
                 ),
               ],
             ),
@@ -415,7 +470,7 @@ class _LoginScreenState extends State<LoginScreen> {
       _showSnackBar('Por favor, preencha todos os campos');
       return;
     }
-    
+
     // Cadastro
     if (_isSignUp) {
       if (_nameController.text.isEmpty) {
@@ -423,10 +478,12 @@ class _LoginScreenState extends State<LoginScreen> {
         return;
       }
       if (!_agreedToTerms) {
-        _showSnackBar('Você deve concordar com os Termos de Uso e Privacidade.');
+        _showSnackBar(
+          'Você deve concordar com os Termos de Uso e Privacidade.',
+        );
         return;
       }
-      
+
       try {
         final result = await AuthService.signUp(
           email: _emailController.text,
@@ -434,33 +491,30 @@ class _LoginScreenState extends State<LoginScreen> {
           name: _nameController.text,
         );
         AuthService.setCurrentUser(result);
-        
+
         _showSnackBar('Usuário criado! Iniciando Onboarding...');
-        
+
         // Inicia o Onboarding, passando o nome para o DTO
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(
             builder: (context) => PersonalInfoScreen(
-              onboardingData: UserOnboardingData(
-                name: _nameController.text,
-              ), 
+              onboardingData: UserOnboardingData(name: _nameController.text),
             ),
           ),
         );
-        
-      } catch (e) {
-        String errorMessage = 'Erro desconhecido';
-
-        if (e.toString().contains('User already registered')) {
-          errorMessage = 'Este email já está cadastrado';
-        } else if (e.toString().contains('Password should be at least')) {
-          errorMessage = 'Senha deve ter pelo menos 6 caracteres';
-        } else if (e.toString().contains('Invalid email')) {
-          errorMessage = 'Email inválido';
-        } else {
-          errorMessage = 'Erro: ${e.toString()}';
-        }
-
+      } catch (e, stackTrace) {
+        Logger.error(
+          'LoginScreen',
+          'Erro ao cadastrar usuário',
+          error: e,
+          stackTrace: stackTrace,
+          extra: {'email': _emailController.text},
+        );
+        final errorMessage = ErrorHandler.handleError(
+          e,
+          stackTrace: stackTrace,
+          context: 'signUp',
+        );
         _showSnackBar(errorMessage);
       }
       return;
@@ -475,15 +529,19 @@ class _LoginScreenState extends State<LoginScreen> {
       AuthService.setCurrentUser(result);
       _showSnackBar('Bem-vindo de volta!');
       _navigateToHome();
-    } catch (e) {
-      String errorMessage = 'Erro desconhecido';
-
-      if (e.toString().contains('Email ou senha incorretos')) {
-        errorMessage = 'Email ou senha incorretos';
-      } else {
-        errorMessage = 'Erro: ${e.toString()}';
-      }
-
+    } catch (e, stackTrace) {
+      Logger.error(
+        'LoginScreen',
+        'Erro ao fazer login',
+        error: e,
+        stackTrace: stackTrace,
+        extra: {'email': _emailController.text},
+      );
+      final errorMessage = ErrorHandler.handleError(
+        e,
+        stackTrace: stackTrace,
+        context: 'signIn',
+      );
       _showSnackBar(errorMessage);
     }
   }
@@ -495,13 +553,15 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void _handleGoogleLogin() {
+    Logger.info('LoginScreen', 'Tentativa de login com Google');
     // TODO: Implementar Google authentication
-    print('Google login');
+    _showSnackBar('Login com Google ainda não implementado');
   }
 
   void _handleFacebookLogin() {
+    Logger.info('LoginScreen', 'Tentativa de login com Facebook');
     // TODO: Implementar Facebook authentication
-    print('Facebook login');
+    _showSnackBar('Login com Facebook ainda não implementado');
   }
 
   void _toggleMode() {

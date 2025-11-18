@@ -1,6 +1,8 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/exercise.dart';
 import 'auth_service.dart';
+import '../utils/logger.dart';
+import '../utils/error_handler.dart';
 
 class ExerciseService {
   // Cliente com Service Role Key para ler a tabela de exercícios
@@ -9,16 +11,28 @@ class ExerciseService {
   // Busca todos os exercícios da tabela 'exercises'
   Future<List<Exercise>> fetchAllExercises() async {
     try {
+      Logger.debug('ExerciseService', 'Buscando todos os exercícios');
       final List<dynamic> response = await _publicClient
           .from('exercises')
           .select('*')
           .order('name', ascending: true);
 
-      // Mapeia a resposta JSON para a lista de modelos Dart
-      return response.map((data) => Exercise.fromJson(data as Map<String, dynamic>)).toList();
-      
-    } catch (e) {
-      print('Erro ao buscar exercícios: $e');
+      final exercises = response
+          .map((data) => Exercise.fromJson(data as Map<String, dynamic>))
+          .toList();
+      Logger.info(
+        'ExerciseService',
+        'Exercícios carregados com sucesso',
+        extra: {'count': exercises.length},
+      );
+      return exercises;
+    } catch (e, stackTrace) {
+      Logger.error(
+        'ExerciseService',
+        'Erro ao buscar exercícios',
+        error: e,
+        stackTrace: stackTrace,
+      );
       return []; // Retorna lista vazia em caso de falha
     }
   }
