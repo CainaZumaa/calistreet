@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../services/workout_service.dart';
 
 // Cores baseadas no code.html e no padrão
 const Color primaryColor = Color(0xFF39FF14); // Verde Neon
@@ -8,7 +9,8 @@ const Color textDark = Color(0xFFFFFFFF);
 const Color subtextDark = Color(0xFFB0B0B0); // Cinza para subtexto
 
 class WorkoutInProgressScreen extends StatefulWidget {
-  const WorkoutInProgressScreen({super.key});
+  final String workoutId;
+  const WorkoutInProgressScreen({super.key, required this.workoutId});
 
   @override
   State<WorkoutInProgressScreen> createState() => _WorkoutInProgressScreenState();
@@ -17,16 +19,47 @@ class WorkoutInProgressScreen extends StatefulWidget {
 class _WorkoutInProgressScreenState extends State<WorkoutInProgressScreen> {
   // Simulação de estado do treino/cronômetro
   bool _isPaused = true;
-  int _minutes = 1;
-  int _seconds = 25;
-  double _overallProgress = 1 / 3; // Simula 1 de 3 exercícios concluídos
+  final int _minutes = 1;
+  final int _seconds = 25;
+  final double _overallProgress = 1 / 3; // Simula 1 de 3 exercícios concluídos
   
-  // Lista de Exercícios (Simulados)
-  List<Map<String, dynamic>> _exercises = [
-    {'name': 'Flexões', 'details': '3 séries x 10 repetições | 60s de descanso', 'isCompleted': true},
-    {'name': 'Flexão Diamante', 'details': '3 séries x 8 repetições | 60s de descanso', 'isCompleted': false},
-    {'name': 'Flexão Inclinada', 'details': '3 séries x 12 repetições | 60s de descanso', 'isCompleted': false},
-  ];
+  List<Map<String, dynamic>> _exercises = [];
+  String _workoutName = '';
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadWorkoutData();
+  }
+
+  void _loadWorkoutData() async {
+    final WorkoutService workoutService = WorkoutService();
+    final workoutData = await workoutService.fetchWorkoutById(widget.workoutId);
+
+    if (mounted && workoutData != null) {
+      setState(() {
+        _workoutName = workoutData['name'] ?? 'Treino';
+        final exercisesJson = workoutData['workout_exercises'] as List<dynamic>? ?? [];
+        _exercises = exercisesJson.map((item) {
+          final Map<String, dynamic>? exerciseDetails = item['exercises'] as Map<String, dynamic>?;
+          return {
+            'name': exerciseDetails?['name'] ?? 'Nome Desconhecido',
+            'details': '${item['sets'] ?? 3} séries x ${item['repetitions'] ?? 10} repetições',
+            'isCompleted': false,
+          };
+        }).toList();
+        _isLoading = false;
+      });
+    } else if (mounted) {
+      setState(() {
+        _isLoading = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Erro ao carregar treino.')),
+      );
+    }
+  }
 
   void _togglePause() {
     setState(() {
@@ -54,7 +87,7 @@ class _WorkoutInProgressScreenState extends State<WorkoutInProgressScreen> {
           icon: const Icon(Icons.arrow_back, color: textDark),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: const Text('Treino de Peito - Iniciante', style: TextStyle(color: textDark, fontWeight: FontWeight.bold)),
+        title: Text(_workoutName, style: const TextStyle(color: textDark, fontWeight: FontWeight.bold)),
         centerTitle: true,
         actions: [
           IconButton(
@@ -63,7 +96,9 @@ class _WorkoutInProgressScreenState extends State<WorkoutInProgressScreen> {
           ),
         ],
       ),
-      body: Column(
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator(color: primaryColor))
+          : Column(
         children: [
           Expanded(
             child: SingleChildScrollView(
@@ -161,7 +196,7 @@ class _WorkoutInProgressScreenState extends State<WorkoutInProgressScreen> {
           shape: BoxShape.circle,
           boxShadow: [
             BoxShadow(
-              color: primaryColor.withOpacity(0.4),
+              color: primaryColor.withValues(alpha: 100),
               blurRadius: 10,
             ),
           ],
