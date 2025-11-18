@@ -240,7 +240,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           Navigator.of(context).push(
                             MaterialPageRoute(
                               builder: (context) =>
-                                  const WorkoutInProgressScreen(),
+                                  WorkoutInProgressScreen(workoutId: _todaysWorkout!['id']),
                             ),
                           );
                         },
