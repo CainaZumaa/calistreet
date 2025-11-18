@@ -166,99 +166,82 @@ class _HomeScreenState extends State<HomeScreen> {
     final String workoutName = _todaysWorkout!['name'] ?? 'Treino Agendado';
     return Container(
       width: double.infinity,
-      height: 200,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
         color: const Color(0xFF1E1E1E),
       ),
-      child: Stack(
+      child: Column(
         children: [
-          // Imagem/Ilustração (Placeholder Simples)
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            child: ClipRRect(
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(16),
-                topRight: Radius.circular(16),
-              ),
-              child: Container(
-                height: 100,
-                color: Colors.blueGrey.shade900,
-                child: const Center(
-                  child: Icon(
-                    Icons.directions_run,
-                    color: Colors.white54,
-                    size: 48,
-                  ),
-                ),
-              ),
+          ClipRRect(
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(16),
+              topRight: Radius.circular(16),
+            ),
+            child: Image.network(
+              'https://images.unsplash.com/vector-1738325063770-a9785d40c39f?q=80&w=880&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+              height: 300,
+              width: double.infinity,
+              fit: BoxFit.cover,
             ),
           ),
-          Positioned(
-            bottom: 0,
-            left: 0,
-            right: 0,
-            child: Container(
-              padding: const EdgeInsets.all(20),
-              decoration: const BoxDecoration(
-                color: Color(0xFF1A1A1A),
-                borderRadius: BorderRadius.only(
-                  bottomLeft: Radius.circular(16),
-                  bottomRight: Radius.circular(16),
-                ),
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: const BoxDecoration(
+              color: Color(0xFF1A1A1A),
+              borderRadius: BorderRadius.only(
+                bottomLeft: Radius.circular(16),
+                bottomRight: Radius.circular(16),
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    workoutName,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  workoutName,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
                   ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    'Agendado para hoje. Mantenha o foco!',
-                    style: TextStyle(color: Colors.white70, fontSize: 14),
-                  ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    'Duração: Estimada',
-                    style: TextStyle(color: Colors.white70, fontSize: 14),
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      ElevatedButton(
-                        onPressed: () {
-                          // Navega para a tela de treino em andamento
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  WorkoutInProgressScreen(workoutId: _todaysWorkout!['id']),
-                            ),
-                          );
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF007AFF),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Agendado para hoje. Mantenha o foco!',
+                  style: TextStyle(color: Colors.white70, fontSize: 14),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Duração: Estimada',
+                  style: TextStyle(color: Colors.white70, fontSize: 14),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    ElevatedButton(
+                      onPressed: () {
+                        // Navega para a tela de treino em andamento
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                WorkoutInProgressScreen(workoutId: _todaysWorkout!['id']),
                           ),
-                        ),
-                        child: const Text(
-                          'Começar',
-                          style: TextStyle(color: Colors.white),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF007AFF),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
                         ),
                       ),
-                    ],
-                  ),
-                ],
-              ),
+                      child: const Text(
+                        'Começar',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
           ),
         ],
