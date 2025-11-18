@@ -229,7 +229,7 @@ class _ExerciseLibraryScreenState extends State<ExerciseLibraryScreen> {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 decoration: BoxDecoration(
-                  color: isSelected ? primaryColor.withOpacity(0.2) : surfaceDark,
+                  color: isSelected ? primaryColor.withAlpha(50) : surfaceDark,
                   borderRadius: BorderRadius.circular(25),
                   border: isSelected ? Border.all(color: primaryColor, width: 2) : null,
                 ),
