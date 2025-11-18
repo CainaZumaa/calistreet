@@ -13,11 +13,12 @@ const Color borderDark = Color(0xFF2E2E30); // Borda
 
 class EquipmentSelectionScreen extends StatefulWidget {
   final UserOnboardingData onboardingData;
-  
+
   const EquipmentSelectionScreen({super.key, required this.onboardingData});
 
   @override
-  State<EquipmentSelectionScreen> createState() => _EquipmentSelectionScreenState();
+  State<EquipmentSelectionScreen> createState() =>
+      _EquipmentSelectionScreenState();
 }
 
 class _EquipmentSelectionScreenState extends State<EquipmentSelectionScreen> {
@@ -28,11 +29,11 @@ class _EquipmentSelectionScreenState extends State<EquipmentSelectionScreen> {
 
   // Lista de opções de equipamentos
   final List<Map<String, dynamic>> _equipmentOptions = [
-    {'label': 'Barra de porta', 'icon': Icons.drag_handle}, 
-    {'label': 'Elásticos', 'icon': Symbols.fitness_center}, 
-    {'label': 'Paralelas', 'icon': Symbols.polyline}, 
-    {'label': 'Argolas', 'icon': Icons.radio_button_unchecked}, 
-    {'label': 'Corda', 'icon': Icons.mediation_sharp}, 
+    {'label': 'Barra de porta', 'icon': Icons.drag_handle},
+    {'label': 'Elásticos', 'icon': Symbols.fitness_center},
+    {'label': 'Paralelas', 'icon': Symbols.polyline},
+    {'label': 'Argolas', 'icon': Icons.radio_button_unchecked},
+    {'label': 'Corda', 'icon': Icons.mediation_sharp},
     {'label': 'Halteres', 'icon': Symbols.sports_gymnastics},
   ];
 
@@ -62,10 +63,13 @@ class _EquipmentSelectionScreenState extends State<EquipmentSelectionScreen> {
         child: Column(
           children: [
             _buildHeader(),
-            
+
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 4,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -94,7 +98,11 @@ class _EquipmentSelectionScreenState extends State<EquipmentSelectionScreen> {
       child: Row(
         children: [
           IconButton(
-            icon: const Icon(Icons.arrow_back_ios_new, color: textDark, size: 20),
+            icon: const Icon(
+              Icons.arrow_back_ios_new,
+              color: textDark,
+              size: 20,
+            ),
             onPressed: () {
               Navigator.of(context).pop();
             },
@@ -156,7 +164,6 @@ class _EquipmentSelectionScreenState extends State<EquipmentSelectionScreen> {
     );
   }
 
-
   Widget _buildLocationSelector() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -176,7 +183,9 @@ class _EquipmentSelectionScreenState extends State<EquipmentSelectionScreen> {
           children: [
             Expanded(child: _buildLocationButton('Em casa', Symbols.home)),
             const SizedBox(width: 16),
-            Expanded(child: _buildLocationButton('Academia', Symbols.fitness_center)),
+            Expanded(
+              child: _buildLocationButton('Academia', Symbols.fitness_center),
+            ),
           ],
         ),
       ],
@@ -185,7 +194,7 @@ class _EquipmentSelectionScreenState extends State<EquipmentSelectionScreen> {
 
   Widget _buildLocationButton(String label, IconData icon) {
     bool isSelected = _selectedLocation == label;
-    
+
     return GestureDetector(
       onTap: () {
         setState(() {
@@ -244,7 +253,7 @@ class _EquipmentSelectionScreenState extends State<EquipmentSelectionScreen> {
             crossAxisCount: 2,
             crossAxisSpacing: 16,
             mainAxisSpacing: 16,
-            childAspectRatio: 1.0, 
+            childAspectRatio: 1.0,
           ),
           itemCount: _equipmentOptions.length,
           itemBuilder: (context, index) {
@@ -258,7 +267,7 @@ class _EquipmentSelectionScreenState extends State<EquipmentSelectionScreen> {
 
   Widget _buildEquipmentCard(String label, IconData icon) {
     bool isSelected = _selectedEquipment.contains(label);
-    
+
     return GestureDetector(
       onTap: () => _toggleEquipment(label), // Permite seleção múltipla
       child: Container(
@@ -277,7 +286,7 @@ class _EquipmentSelectionScreenState extends State<EquipmentSelectionScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             // Usando Symbols para ícones
-            Icon(icon, color: isSelected ? primaryColor : textDark, size: 40), 
+            Icon(icon, color: isSelected ? primaryColor : textDark, size: 40),
             const SizedBox(height: 8),
             Text(
               label,
@@ -301,7 +310,7 @@ class _EquipmentSelectionScreenState extends State<EquipmentSelectionScreen> {
         height: 56,
         width: double.infinity,
         child: ElevatedButton(
-          onPressed:_handleFinalize,
+          onPressed: _handleFinalize,
           style: ElevatedButton.styleFrom(
             backgroundColor: primaryColor,
             shape: RoundedRectangleBorder(
@@ -343,6 +352,24 @@ class _EquipmentSelectionScreenState extends State<EquipmentSelectionScreen> {
       return;
     }
 
+    if (widget.onboardingData.name == null ||
+        widget.onboardingData.weight == null ||
+        widget.onboardingData.height == null ||
+        widget.onboardingData.dateOfBirth == null ||
+        widget.onboardingData.gender == null ||
+        widget.onboardingData.goal == null ||
+        widget.onboardingData.level == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Dados incompletos. Por favor, volte e preencha todos os campos.',
+          ),
+          backgroundColor: Color(0xFFE53935),
+        ),
+      );
+      return;
+    }
+
     setState(() {
       _isLoading = true;
     });
@@ -355,7 +382,9 @@ class _EquipmentSelectionScreenState extends State<EquipmentSelectionScreen> {
       // 2. Obter o ID do usuário logado (armazenado no AuthService durante o Cadastro/Login)
       final userId = AuthService.currentUser?['user_id'];
       if (userId == null) {
-        throw Exception('Usuário não autenticado ou ID de usuário não encontrado.');
+        throw Exception(
+          'Usuário não autenticado ou ID de usuário não encontrado.',
+        );
       }
 
       // 3. Preparar os dados para o Supabase
@@ -364,7 +393,7 @@ class _EquipmentSelectionScreenState extends State<EquipmentSelectionScreen> {
       // 4. Inserir na tabela 'user_profiles'
       final serviceClient = AuthService.createServiceRoleClient();
       await serviceClient.from('user_profiles').insert(dataToSave);
-      
+
       // 5. Navegar para a Home e limpar a pilha de navegação
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -376,7 +405,6 @@ class _EquipmentSelectionScreenState extends State<EquipmentSelectionScreen> {
         // Assumindo que a rota '/' leva para AuthWrapper/HomeScreen
         Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
       }
-
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
