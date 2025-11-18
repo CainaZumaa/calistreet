@@ -4,7 +4,7 @@ import 'goal_selection_screen.dart';
 import '../../models/user_onboarding_data.dart';
 
 // Cores baseadas no code2.html:
-const Color primaryColor = Color(0xFF46EC13); // Verde Neon
+const Color primaryColor = Color(0xFF007AFF); // Azul padrão do projeto
 const Color backgroundDark = Color(0xFF000000); // Fundo Preto
 const Color surfaceDark = Color(0xFF1C1C1E); // Input Background
 const Color textDark = Color(0xFFFFFFFF); // Texto Principal
@@ -277,7 +277,7 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
           // Aplica o tema escuro ao Date Picker para combinar com o app
           data: ThemeData.dark().copyWith(
             colorScheme: const ColorScheme.dark(
-              primary: primaryColor, // Cor principal (verde)
+              primary: primaryColor, // Cor principal do date picker (azul)
               onPrimary: backgroundDark,
               surface: surfaceDark,
               onSurface: textDark,

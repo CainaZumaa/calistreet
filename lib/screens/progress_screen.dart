@@ -5,10 +5,16 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'profile_screen.dart';
 
 // Cores no padrão do seu app
-const Color primaryColor = Color(0xFF007AFF); // Azul - Primária para acentuação e gráfico (anteriormente Verde)
-const Color secondaryColor = Color(0xFFFF6F00); // Laranja - Mantido para Conquistas
+const Color primaryColor = Color(
+  0xFF007AFF,
+); // Azul - Primária para acentuação e gráfico
+const Color secondaryColor = Color(
+  0xFFFF6F00,
+); // Laranja - Mantido para Conquistas
 const Color backgroundDark = Color(0xFF000000); // Fundo Preto
-const Color cardDark = Color(0xFF1A1A1A); // Fundo do Card (Preto mais claro para contraste)
+const Color cardDark = Color(
+  0xFF1A1A1A,
+); // Fundo do Card (Preto mais claro para contraste)
 const Color textDark = Color(0xFFFFFFFF);
 const Color subtextDark = Color(0xFF888888); // Cinza para subtexto
 const Color borderDark = Color(0xFF2C2C2C); // Borda
@@ -25,9 +31,9 @@ class _ProgressScreenState extends State<ProgressScreen> {
 
   // Dados simulados para o resumo da semana
   final Map<String, double> _weeklyData = {
-    'DOM': 40, 
-    'SEG': 100, 
-    'TER': 30,  
+    'DOM': 40,
+    'SEG': 100,
+    'TER': 30,
     'QUA': 80,
     'QUI': 40,
     'SEX': 80,
@@ -69,8 +75,10 @@ class _ProgressScreenState extends State<ProgressScreen> {
   }
 
   Widget _buildWeeklySummaryCard() {
-    final double maxBarHeight = _weeklyData.values.reduce((a, b) => a > b ? a : b);
-    
+    final double maxBarHeight = _weeklyData.values.reduce(
+      (a, b) => a > b ? a : b,
+    );
+
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
@@ -90,7 +98,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 16),
-          
+
           // 1. Métricas Principais
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -100,7 +108,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
               _buildMetric('5,280', 'Calorias', primaryColor),
             ],
           ),
-          
+
           // 2. Gráfico de Barras
           const SizedBox(height: 24),
           SizedBox(
@@ -111,7 +119,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
               children: _weeklyData.entries.map((entry) {
                 // Normaliza a altura da barra em relação ao valor máximo
                 final double normalizedHeight = entry.value / maxBarHeight;
-                
+
                 return _buildBar(
                   heightRatio: normalizedHeight,
                   label: entry.key,
@@ -157,7 +165,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
     // Define a cor da barra (ativa ou inativa)
     final barColor = isActive ? primaryColor : primaryColor.withOpacity(0.3);
     // Altura máxima do gráfico é 100% da altura do SizedBox pai
-    final double barHeight = 100 * heightRatio; 
+    final double barHeight = 100 * heightRatio;
 
     return Column(
       mainAxisAlignment: MainAxisAlignment.end,
@@ -195,7 +203,9 @@ class _ProgressScreenState extends State<ProgressScreen> {
           subtitle: 'Veja todos os seus treinos',
           icon: Icons.history,
           iconColor: primaryColor,
-          onTap: () { /* TODO: Navegar para Histórico */ },
+          onTap: () {
+            /* TODO: Navegar para Histórico */
+          },
         ),
         const SizedBox(height: 16),
         // Botão Compartilhar Conquistas
@@ -204,7 +214,9 @@ class _ProgressScreenState extends State<ProgressScreen> {
           subtitle: 'Mostre seu progresso',
           icon: Icons.share,
           iconColor: secondaryColor,
-          onTap: () { /* TODO: Implementar compartilhamento */ },
+          onTap: () {
+            /* TODO: Implementar compartilhamento */
+          },
         ),
       ],
     );
@@ -283,9 +295,21 @@ class _ProgressScreenState extends State<ProgressScreen> {
           physics: const NeverScrollableScrollPhysics(),
           childAspectRatio: 0.8, // Para acomodar o ícone e o texto
           children: [
-            _buildAchievementCard('Primeiro Treino!', Icons.military_tech, secondaryColor),
-            _buildAchievementCard('10 Horas de Treino', Icons.timer, secondaryColor),
-            _buildAchievementCard('Mestre das Flexões', Icons.fitness_center, secondaryColor),
+            _buildAchievementCard(
+              'Primeiro Treino!',
+              Icons.military_tech,
+              secondaryColor,
+            ),
+            _buildAchievementCard(
+              '10 Horas de Treino',
+              Icons.timer,
+              secondaryColor,
+            ),
+            _buildAchievementCard(
+              'Mestre das Flexões',
+              Icons.fitness_center,
+              secondaryColor,
+            ),
           ],
         ),
       ],

@@ -5,8 +5,10 @@ import '../../models/exercise.dart';
 
 // Cores baseadas no padrão:
 const Color primaryColor = Color(0xFF007AFF); // Azul - Primária para acentuação
-const Color backgroundDark = Color(0xFF131811); // Fundo Escuro do design (quase preto)
-const Color surfaceDark = Color(0xFF2c3928); // Fundo dos filtros/busca (Verde-Escuro)
+const Color backgroundDark = Color(
+  0xFF000000,
+); // Fundo Escuro do design (quase preto)
+const Color surfaceDark = Color(0xFF1C1C1E); // Fundo dos filtros/busca
 const Color cardDark = Color(0xFF1A1A1A); // Fundo dos cards na lista
 const Color textDark = Color(0xFFFFFFFF);
 const Color subtextDark = Color(0xFFA3B99D); // Subtexto do design Progresso
@@ -33,27 +35,28 @@ class _ExerciseLibraryScreenState extends State<ExerciseLibraryScreen> {
     'Core': ['Abdomen', 'Lombar'],
     'Inferior': ['Quadriceps', 'Panturrilha', 'Posterior'],
   };
-  
+
   @override
   void initState() {
     super.initState();
     _fetchExercises();
   }
-  
+
   void _fetchExercises() async {
     setState(() {
       _isLoading = true;
     });
-    
+
     final ExerciseService service = ExerciseService();
     final List<Exercise> exercises = await service.fetchAllExercises();
-    
+
     setState(() {
       _allExercises = exercises;
       _isLoading = false;
-      
+
       // Se houver dados, garante que o filtro inicial seja válido
-      if (exercises.isNotEmpty && _subGroupFilters[_selectedGroup]?.isEmpty == true) {
+      if (exercises.isNotEmpty &&
+          _subGroupFilters[_selectedGroup]?.isEmpty == true) {
         // Atualiza os subgrupos disponíveis com base nos dados reais, se necessário.
         // Por enquanto, mantemos a estrutura de filtro anterior para UI.
       }
@@ -66,7 +69,9 @@ class _ExerciseLibraryScreenState extends State<ExerciseLibraryScreen> {
     final filteredExercises = _allExercises.where((ex) {
       bool matchesGroup = ex.muscleGroup == _selectedGroup;
       bool matchesSubGroup = ex.subgroup == _selectedSubGroup;
-      bool matchesSearch = ex.name.toLowerCase().contains(_searchQuery.toLowerCase());
+      bool matchesSearch = ex.name.toLowerCase().contains(
+        _searchQuery.toLowerCase(),
+      );
 
       return matchesGroup && matchesSubGroup && matchesSearch;
     }).toList();
@@ -77,23 +82,28 @@ class _ExerciseLibraryScreenState extends State<ExerciseLibraryScreen> {
         children: [
           // Header e Barra de Busca
           _buildHeaderAndSearch(),
-          
+
           // Botões Segmentados (Superior/Core/Inferior)
           _buildGroupFilters(),
-          
+
           // Chips (Ombros/Peito/Costas, etc.)
           _buildSubGroupChips(),
-          
+
           // Lista de Exercícios
           Expanded(
-            child: _isLoading 
-              ? const Center(child: CircularProgressIndicator(color: primaryColor))
-              : ListView(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                children: filteredExercises.map((exercise) {
-                  return _buildExerciseListItem(exercise.toMapForDisplay());
-                }).toList(),
-              ),
+            child: _isLoading
+                ? const Center(
+                    child: CircularProgressIndicator(color: primaryColor),
+                  )
+                : ListView(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
+                    children: filteredExercises.map((exercise) {
+                      return _buildExerciseListItem(exercise.toMapForDisplay());
+                    }).toList(),
+                  ),
           ),
         ],
       ),
@@ -114,14 +124,24 @@ class _ExerciseLibraryScreenState extends State<ExerciseLibraryScreen> {
             child: Row(
               children: [
                 IconButton(
-                  icon: const Icon(Icons.arrow_back_ios_new, color: textDark, size: 24),
-                  onPressed: () => Navigator.of(context).pop(), // Volta para CreateWorkoutScreen
+                  icon: const Icon(
+                    Icons.arrow_back_ios_new,
+                    color: textDark,
+                    size: 24,
+                  ),
+                  onPressed: () => Navigator.of(
+                    context,
+                  ).pop(), // Volta para CreateWorkoutScreen
                 ),
                 Expanded(
                   child: Center(
                     child: Text(
                       'Exercícios',
-                      style: const TextStyle(color: textDark, fontSize: 20, fontWeight: FontWeight.bold),
+                      style: const TextStyle(
+                        color: textDark,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 ),
@@ -129,7 +149,7 @@ class _ExerciseLibraryScreenState extends State<ExerciseLibraryScreen> {
               ],
             ),
           ),
-          
+
           // Barra de Busca
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -146,7 +166,10 @@ class _ExerciseLibraryScreenState extends State<ExerciseLibraryScreen> {
                 prefixIcon: Icon(Icons.search, color: subtextDark),
                 filled: true,
                 fillColor: surfaceDark, // Fundo escuro do design
-                contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
+                contentPadding: const EdgeInsets.symmetric(
+                  vertical: 0,
+                  horizontal: 16,
+                ),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide: BorderSide.none,
@@ -179,7 +202,8 @@ class _ExerciseLibraryScreenState extends State<ExerciseLibraryScreen> {
                   onTap: () {
                     setState(() {
                       _selectedGroup = group;
-                      _selectedSubGroup = _subGroupFilters[group]!.first; // Reset subgrupo
+                      _selectedSubGroup =
+                          _subGroupFilters[group]!.first; // Reset subgrupo
                     });
                   },
                   child: Container(
@@ -192,7 +216,9 @@ class _ExerciseLibraryScreenState extends State<ExerciseLibraryScreen> {
                         group,
                         style: TextStyle(
                           color: isSelected ? textDark : subtextDark,
-                          fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                          fontWeight: isSelected
+                              ? FontWeight.bold
+                              : FontWeight.w500,
                         ),
                       ),
                     ),
@@ -205,10 +231,11 @@ class _ExerciseLibraryScreenState extends State<ExerciseLibraryScreen> {
       ),
     );
   }
-  
+
   Widget _buildSubGroupChips() {
-    final List<String> currentSubGroups = _subGroupFilters[_selectedGroup] ?? [];
-    
+    final List<String> currentSubGroups =
+        _subGroupFilters[_selectedGroup] ?? [];
+
     return Container(
       color: backgroundDark,
       height: 60,
@@ -217,7 +244,7 @@ class _ExerciseLibraryScreenState extends State<ExerciseLibraryScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 16),
         children: currentSubGroups.map((subGroup) {
           bool isSelected = _selectedSubGroup == subGroup;
-          
+
           return Padding(
             padding: const EdgeInsets.only(right: 12),
             child: GestureDetector(
@@ -231,14 +258,18 @@ class _ExerciseLibraryScreenState extends State<ExerciseLibraryScreen> {
                 decoration: BoxDecoration(
                   color: isSelected ? primaryColor.withAlpha(50) : surfaceDark,
                   borderRadius: BorderRadius.circular(25),
-                  border: isSelected ? Border.all(color: primaryColor, width: 2) : null,
+                  border: isSelected
+                      ? Border.all(color: primaryColor, width: 2)
+                      : null,
                 ),
                 child: Center(
                   child: Text(
                     subGroup,
                     style: TextStyle(
                       color: isSelected ? primaryColor : textDark,
-                      fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                      fontWeight: isSelected
+                          ? FontWeight.bold
+                          : FontWeight.w500,
                       fontSize: 14,
                     ),
                   ),
@@ -256,7 +287,7 @@ class _ExerciseLibraryScreenState extends State<ExerciseLibraryScreen> {
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
       decoration: BoxDecoration(
-        color: cardDark, 
+        color: cardDark,
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: borderDark, width: 1),
       ),
@@ -278,14 +309,18 @@ class _ExerciseLibraryScreenState extends State<ExerciseLibraryScreen> {
                 ),
               ),
               const SizedBox(width: 16),
-              
+
               // Nome e Nível
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     exercise['name'],
-                    style: const TextStyle(color: textDark, fontSize: 16, fontWeight: FontWeight.w600),
+                    style: const TextStyle(
+                      color: textDark,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                   const SizedBox(height: 4),
                   Row(
@@ -295,7 +330,8 @@ class _ExerciseLibraryScreenState extends State<ExerciseLibraryScreen> {
                         height: 8,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: exercise['level_color'] as Color, // Cor do nível
+                          color:
+                              exercise['level_color'] as Color, // Cor do nível
                         ),
                       ),
                       const SizedBox(width: 8),
@@ -309,13 +345,15 @@ class _ExerciseLibraryScreenState extends State<ExerciseLibraryScreen> {
               ),
             ],
           ),
-          
+
           // Botão Favorito/Adicionar
           IconButton(
             icon: const Icon(Icons.star_border, color: textDark),
             onPressed: () {
               // TODO: Implementar lógica de Favorito ou Adicionar ao Treino
-              Navigator.of(context).pop(exercise); // Retorna o exercício selecionado
+              Navigator.of(
+                context,
+              ).pop(exercise); // Retorna o exercício selecionado
             },
           ),
         ],
