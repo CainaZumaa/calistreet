@@ -3,7 +3,7 @@ import 'equipment_selection_screen.dart';
 import '../../models/user_onboarding_data.dart';
 
 // REUTILIZAÇÃO DAS CORES DO personal_info_screen.dart
-const Color primaryColor = Color(0xFF46EC13); // Verde Neon
+const Color primaryColor = Color(0xFF007AFF); // Azul padrão do projeto
 const Color backgroundDark = Color(0xFF000000); // Fundo Preto (texto no botão)
 const Color surfaceDark = Color(0xFF1C1C1E); // Input Background
 const Color textDark = Color(0xFFFFFFFF); // Texto Principal
@@ -21,16 +21,12 @@ class GoalSelectionScreen extends StatefulWidget {
 
 class _GoalSelectionScreenState extends State<GoalSelectionScreen> {
   final List<String> _goals = [
-    'Ganhar massa muscular', 
-    'Perder peso', 
-    'Melhorar resistência'
+    'Ganhar massa muscular',
+    'Perder peso',
+    'Melhorar resistência',
   ];
 
-  final List<String> _levels = [
-    'Iniciante',
-    'Intermediário',
-    'Avançado',
-  ];
+  final List<String> _levels = ['Iniciante', 'Intermediário', 'Avançado'];
 
   String? _selectedGoal;
   String _selectedLevel = 'Intermediário';
@@ -51,11 +47,14 @@ class _GoalSelectionScreenState extends State<GoalSelectionScreen> {
           children: [
             // Header (Ícone de Voltar)
             _buildHeader(),
-            
+
             // Conteúdo Principal
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 4,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -85,7 +84,11 @@ class _GoalSelectionScreenState extends State<GoalSelectionScreen> {
       child: Row(
         children: [
           IconButton(
-            icon: const Icon(Icons.arrow_back_ios_new, color: textDark, size: 20),
+            icon: const Icon(
+              Icons.arrow_back_ios_new,
+              color: textDark,
+              size: 20,
+            ),
             onPressed: () {
               Navigator.of(context).pop();
             },
@@ -238,7 +241,7 @@ class _GoalSelectionScreenState extends State<GoalSelectionScreen> {
 
   Widget _buildLevelButton(String label) {
     bool isSelected = _selectedLevel == label;
-    
+
     return GestureDetector(
       onTap: () {
         setState(() {
@@ -262,14 +265,16 @@ class _GoalSelectionScreenState extends State<GoalSelectionScreen> {
                     color: primaryColor.withOpacity(0.3),
                     blurRadius: 4,
                     offset: const Offset(0, 2),
-                  )
+                  ),
                 ]
               : null,
         ),
         child: Text(
           label,
           style: TextStyle(
-            color: isSelected ? backgroundDark : textDark, // Texto preto no botão selecionado
+            color: isSelected
+                ? backgroundDark
+                : textDark, // Texto preto no botão selecionado
             fontSize: 16,
             fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
           ),
@@ -313,6 +318,7 @@ class _GoalSelectionScreenState extends State<GoalSelectionScreen> {
       ),
     );
   }
+
   void _handleNext() {
     // 1. Atualiza o DTO com os dados coletados
     widget.onboardingData.goal = _selectedGoal;

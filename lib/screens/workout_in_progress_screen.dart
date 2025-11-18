@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../services/workout_service.dart';
 
 // Cores baseadas no code.html e no padrão
-const Color primaryColor = Color(0xFF39FF14); // Verde Neon
+const Color primaryColor = Color(0xFF007AFF); // Azul padrão do projeto
 const Color backgroundDark = Color(0xFF1A1A1A);
 const Color cardDark = Color(0xFF212121);
 const Color textDark = Color(0xFFFFFFFF);
@@ -13,7 +13,8 @@ class WorkoutInProgressScreen extends StatefulWidget {
   const WorkoutInProgressScreen({super.key, required this.workoutId});
 
   @override
-  State<WorkoutInProgressScreen> createState() => _WorkoutInProgressScreenState();
+  State<WorkoutInProgressScreen> createState() =>
+      _WorkoutInProgressScreenState();
 }
 
 class _WorkoutInProgressScreenState extends State<WorkoutInProgressScreen> {
@@ -22,7 +23,7 @@ class _WorkoutInProgressScreenState extends State<WorkoutInProgressScreen> {
   final int _minutes = 1;
   final int _seconds = 25;
   final double _overallProgress = 1 / 3; // Simula 1 de 3 exercícios concluídos
-  
+
   List<Map<String, dynamic>> _exercises = [];
   String _workoutName = '';
   bool _isLoading = true;
@@ -40,12 +41,15 @@ class _WorkoutInProgressScreenState extends State<WorkoutInProgressScreen> {
     if (mounted && workoutData != null) {
       setState(() {
         _workoutName = workoutData['name'] ?? 'Treino';
-        final exercisesJson = workoutData['workout_exercises'] as List<dynamic>? ?? [];
+        final exercisesJson =
+            workoutData['workout_exercises'] as List<dynamic>? ?? [];
         _exercises = exercisesJson.map((item) {
-          final Map<String, dynamic>? exerciseDetails = item['exercises'] as Map<String, dynamic>?;
+          final Map<String, dynamic>? exerciseDetails =
+              item['exercises'] as Map<String, dynamic>?;
           return {
             'name': exerciseDetails?['name'] ?? 'Nome Desconhecido',
-            'details': '${item['sets'] ?? 3} séries x ${item['repetitions'] ?? 10} repetições',
+            'details':
+                '${item['sets'] ?? 3} séries x ${item['repetitions'] ?? 10} repetições',
             'isCompleted': false,
           };
         }).toList();
@@ -55,9 +59,9 @@ class _WorkoutInProgressScreenState extends State<WorkoutInProgressScreen> {
       setState(() {
         _isLoading = false;
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Erro ao carregar treino.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Erro ao carregar treino.')));
     }
   }
 
@@ -71,7 +75,10 @@ class _WorkoutInProgressScreenState extends State<WorkoutInProgressScreen> {
     // TODO: 1. Lógica de cálculo de calorias/tempo
     // TODO: 2. Enviar dados de conclusão para o Supabase
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Treino concluído com sucesso!'), backgroundColor: primaryColor),
+      const SnackBar(
+        content: Text('Treino concluído com sucesso!'),
+        backgroundColor: primaryColor,
+      ),
     );
     Navigator.of(context).pop(); // Volta para a Home
   }
@@ -87,38 +94,46 @@ class _WorkoutInProgressScreenState extends State<WorkoutInProgressScreen> {
           icon: const Icon(Icons.arrow_back, color: textDark),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: Text(_workoutName, style: const TextStyle(color: textDark, fontWeight: FontWeight.bold)),
+        title: Text(
+          _workoutName,
+          style: const TextStyle(color: textDark, fontWeight: FontWeight.bold),
+        ),
         centerTitle: true,
         actions: [
           IconButton(
             icon: const Icon(Icons.more_vert, color: textDark),
-            onPressed: () { /* TODO: Opções do treino */ },
+            onPressed: () {
+              /* TODO: Opções do treino */
+            },
           ),
         ],
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator(color: primaryColor))
           : Column(
-        children: [
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
-              child: Column(
-                children: [
-                  _buildTimerSection(),
-                  const SizedBox(height: 24),
-                  _buildProgressIndicator(),
-                  const SizedBox(height: 32),
-                  _buildPauseButton(),
-                  const SizedBox(height: 32),
-                  _buildExerciseChecklist(),
-                ],
-              ),
+              children: [
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 24,
+                    ),
+                    child: Column(
+                      children: [
+                        _buildTimerSection(),
+                        const SizedBox(height: 24),
+                        _buildProgressIndicator(),
+                        const SizedBox(height: 32),
+                        _buildPauseButton(),
+                        const SizedBox(height: 32),
+                        _buildExerciseChecklist(),
+                      ],
+                    ),
+                  ),
+                ),
+                _buildFinishWorkoutButton(),
+              ],
             ),
-          ),
-          _buildFinishWorkoutButton(),
-        ],
-      ),
     );
   }
 
@@ -131,7 +146,14 @@ class _WorkoutInProgressScreenState extends State<WorkoutInProgressScreen> {
           _buildTimerBox(_minutes.toString().padLeft(2, '0')),
           const Padding(
             padding: EdgeInsets.symmetric(horizontal: 10),
-            child: Text(':', style: TextStyle(color: textDark, fontSize: 32, fontWeight: FontWeight.bold)),
+            child: Text(
+              ':',
+              style: TextStyle(
+                color: textDark,
+                fontSize: 32,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ),
           _buildTimerBox(_seconds.toString().padLeft(2, '0')),
         ],
@@ -150,7 +172,11 @@ class _WorkoutInProgressScreenState extends State<WorkoutInProgressScreen> {
         child: Center(
           child: Text(
             value,
-            style: const TextStyle(color: textDark, fontSize: 32, fontWeight: FontWeight.bold),
+            style: const TextStyle(
+              color: textDark,
+              fontSize: 32,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ),
       ),
@@ -166,8 +192,14 @@ class _WorkoutInProgressScreenState extends State<WorkoutInProgressScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('Progresso Geral', style: TextStyle(color: textDark, fontSize: 16)),
-              Text('${(_overallProgress * 100).toInt()}%', style: TextStyle(color: subtextDark)),
+              const Text(
+                'Progresso Geral',
+                style: TextStyle(color: textDark, fontSize: 16),
+              ),
+              Text(
+                '${(_overallProgress * 100).toInt()}%',
+                style: TextStyle(color: subtextDark),
+              ),
             ],
           ),
           const SizedBox(height: 8),
@@ -232,11 +264,17 @@ class _WorkoutInProgressScreenState extends State<WorkoutInProgressScreen> {
                   activeColor: primaryColor,
                   checkColor: backgroundDark,
                   side: const BorderSide(color: Color(0xFF404040), width: 2),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(4),
+                  ),
                 ),
                 title: Text(
                   exercise['name'],
-                  style: const TextStyle(color: textDark, fontSize: 16, fontWeight: FontWeight.w500),
+                  style: const TextStyle(
+                    color: textDark,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
                 subtitle: Text(
                   exercise['details'],
@@ -274,7 +312,11 @@ class _WorkoutInProgressScreenState extends State<WorkoutInProgressScreen> {
           ),
           child: const Text(
             'Concluir Treino',
-            style: TextStyle(color: backgroundDark, fontSize: 16, fontWeight: FontWeight.bold),
+            style: TextStyle(
+              color: backgroundDark,
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ),
       ),

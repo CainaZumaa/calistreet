@@ -4,7 +4,7 @@ import '../../models/user_onboarding_data.dart';
 import '../../services/auth_service.dart';
 
 // REUTILIZAÇÃO DAS CORES
-const Color primaryColor = Color(0xFF46EC13); // Verde Neon
+const Color primaryColor = Color(0xFF007AFF); // Azul padrão do projeto
 const Color backgroundDark = Color(0xFF000000); // Fundo Preto (texto no botão)
 const Color surfaceDark = Color(0xFF1C1C1E); // Input Background
 const Color textDark = Color(0xFFFFFFFF); // Texto Principal

@@ -536,7 +536,7 @@ class _CreateWorkoutScreenState extends State<CreateWorkoutScreen> {
         child: ElevatedButton(
           onPressed: _addExercise,
           style: ElevatedButton.styleFrom(
-            backgroundColor: secondaryColor, // Verde para o botão Adicionar
+            backgroundColor: secondaryColor, // Azul para o botão Adicionar
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(8),
             ),
