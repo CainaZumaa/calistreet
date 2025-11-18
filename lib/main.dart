@@ -375,7 +375,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 _agreedToTerms = newValue ?? false;
               });
             },
-            activeColor: const Color(0xFF4CAF50),
+            activeColor: const Color(0xFF007AFF),
             checkColor: Colors.black,
             side: const BorderSide(color: Color(0xFF404040), width: 2),
             shape: RoundedRectangleBorder(
@@ -393,7 +393,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 TextSpan(
                   text: 'Termos de Uso',
                   style: const TextStyle(
-                    color: Color(0xFF4CAF50),
+                    color: Color(0xFF007AFF),
                     decoration: TextDecoration.underline,
                   ),
                   recognizer: TapGestureRecognizer()
@@ -408,7 +408,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 TextSpan(
                   text: 'Política de Privacidade.',
                   style: const TextStyle(
-                    color: Color(0xFF4CAF50),
+                    color: Color(0xFF007AFF),
                     decoration: TextDecoration.underline,
                   ),
                   recognizer: TapGestureRecognizer()

@@ -2,7 +2,6 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/exercise.dart';
 import 'auth_service.dart';
 import '../utils/logger.dart';
-import '../utils/error_handler.dart';
 
 class ExerciseService {
   // Cliente com Service Role Key para ler a tabela de exercícios

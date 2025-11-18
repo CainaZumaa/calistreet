@@ -4,8 +4,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../services/auth_service.dart';
 import 'progress_screen.dart';
 
-// Definindo cores comuns para consistência 
-const Color primaryGreen = Color(0xFF4CAF50);
+// Definindo cores comuns para consistência
 const Color backgroundDark = Color(0xFF000000);
 const Color primaryBlue = Color(0xFF007AFF);
 
@@ -31,7 +30,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final userData = AuthService.currentUser;
     if (userData != null) {
       final userId = userData['user_id'] as String;
-      
+
       final profile = await AuthService.fetchUserProfile(userId);
 
       setState(() {
@@ -66,12 +65,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
 
     // Fallback: usar o nome do email se o perfil não for encontrado
-    final String defaultEmail = AuthService.currentUser?['email'] ?? 'usuario@exemplo.com';
+    final String defaultEmail =
+        AuthService.currentUser?['email'] ?? 'usuario@exemplo.com';
     final String defaultUserName = defaultEmail.split('@')[0];
-    
+
     // Tenta usar o nome real da tabela user_profiles (ou nome do login como fallback)
-    final String displayName = _userProfile?['name'] ?? AuthService.currentUser?['name'] ?? defaultUserName;
-    final String displayUsername = defaultUserName.toLowerCase(); // Usar o nome do email como username
+    final String displayName =
+        _userProfile?['name'] ??
+        AuthService.currentUser?['name'] ??
+        defaultUserName;
+    final String displayUsername = defaultUserName
+        .toLowerCase(); // Usar o nome do email como username
 
     return Scaffold(
       backgroundColor: backgroundDark,
@@ -123,7 +127,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   gradient: const LinearGradient(
-                    colors: [primaryGreen, Color(0xFF2E7D32)],
+                    colors: [primaryBlue, Color(0xFF0051D5)],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
@@ -137,7 +141,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   width: 36,
                   height: 36,
                   decoration: const BoxDecoration(
-                    color: primaryGreen,
+                    color: primaryBlue,
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(Icons.edit, color: Colors.white, size: 18),
@@ -173,7 +177,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final int workouts = _userProfile?['workouts_completed'] ?? 150;
     final int calories = _userProfile?['calories_burned'] ?? 2500;
     final String time = _userProfile?['total_time'] ?? '30h';
-    
+
     return Row(
       children: [
         Expanded(child: _buildStatCard(workouts.toString(), 'Treinos')),
@@ -203,10 +207,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
           ),
           const SizedBox(height: 4),
-          Text(
-            label,
-            style: const TextStyle(color: Colors.grey, fontSize: 12),
-          ),
+          Text(label, style: const TextStyle(color: Colors.grey, fontSize: 12)),
         ],
       ),
     );
@@ -230,11 +231,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           child: ListView(
             scrollDirection: Axis.horizontal,
             children: [
-              _buildAchievementBadge(
-                'Iniciante',
-                Icons.eco,
-                primaryGreen,
-              ),
+              _buildAchievementBadge('Iniciante', Icons.eco, primaryBlue),
               const SizedBox(width: 16),
               _buildAchievementBadge(
                 'Intermediário',
@@ -285,7 +282,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       child: ElevatedButton(
         onPressed: () {},
         style: ElevatedButton.styleFrom(
-          backgroundColor: primaryGreen,
+          backgroundColor: primaryBlue,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),

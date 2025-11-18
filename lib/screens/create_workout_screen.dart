@@ -1,18 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:material_symbols_icons/material_symbols_icons.dart';
 import '../../services/workout_service.dart';
-import '../../services/auth_service.dart';
 import '../../models/workout_exercise_item.dart';
 import 'exercise_library_screen.dart';
 
 // Cores baseadas no padrão:
-const Color primaryColor = Color(0xFF007AFF); 
-const Color secondaryColor = Color(0xFF4CAF50);
-const Color backgroundDark = Color(0xFF000000); 
-const Color cardDark = Color(0xFF1A1A1A); 
+const Color primaryColor = Color(0xFF007AFF);
+const Color secondaryColor = Color(0xFF007AFF);
+const Color backgroundDark = Color(0xFF000000);
+const Color cardDark = Color(0xFF1A1A1A);
 const Color textDark = Color(0xFFFFFFFF);
-const Color subtextDark = Color(0xFF888888); 
-const Color borderDark = Color(0xFF2C2C2C); 
+const Color subtextDark = Color(0xFF888888);
+const Color borderDark = Color(0xFF2C2C2C);
 const Color errorColor = Color(0xFFE53935);
 
 class CreateWorkoutScreen extends StatefulWidget {
@@ -25,14 +23,22 @@ class CreateWorkoutScreen extends StatefulWidget {
 }
 
 class _CreateWorkoutScreenState extends State<CreateWorkoutScreen> {
-  final TextEditingController _nameController = TextEditingController(); 
+  final TextEditingController _nameController = TextEditingController();
   final WorkoutService _workoutService = WorkoutService();
-  
-  List<WorkoutExerciseItem> _exercises = []; 
+
+  List<WorkoutExerciseItem> _exercises = [];
   bool _isSaving = false;
   bool _isLoading = false;
 
-  final List<String> _weekDays = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
+  final List<String> _weekDays = [
+    'Seg',
+    'Ter',
+    'Qua',
+    'Qui',
+    'Sex',
+    'Sáb',
+    'Dom',
+  ];
   List<String> _selectedDays = [];
 
   @override
@@ -49,45 +55,50 @@ class _CreateWorkoutScreenState extends State<CreateWorkoutScreen> {
     _nameController.dispose();
     super.dispose();
   }
-  
+
   // Carrega dados do treino para edição
   void _loadWorkoutForEditing() async {
     setState(() {
       _isLoading = true;
     });
 
-    final Map<String, dynamic>? workoutData = 
-        await _workoutService.fetchWorkoutById(widget.workoutId!);
-        
+    final Map<String, dynamic>? workoutData = await _workoutService
+        .fetchWorkoutById(widget.workoutId!);
+
     if (workoutData != null) {
       _nameController.text = workoutData['name'] ?? '';
-      
-      final List<dynamic> exercisesJson = workoutData['workout_exercises'] ?? [];
+
+      final List<dynamic> exercisesJson =
+          workoutData['workout_exercises'] ?? [];
       List<WorkoutExerciseItem> loadedItems = [];
-      
+
       // Mapeia os exercícios aninhados para o DTO
       for (var item in exercisesJson) {
         // Acessa o objeto ANINHADO que contém os detalhes do exercício (name, video_url)
-        final Map<String, dynamic>? exerciseDetails = item['exercises'] as Map<String, dynamic>?;
-        
+        final Map<String, dynamic>? exerciseDetails =
+            item['exercises'] as Map<String, dynamic>?;
+
         loadedItems.add(
           WorkoutExerciseItem(
             exerciseId: item['exercise_id'] as String,
-            exerciseName: exerciseDetails?['name'] ?? 'Nome Desconhecido', 
-            imageUrl: exerciseDetails?['video_url'] ?? 'https://placehold.co/60',
-            
+            exerciseName: exerciseDetails?['name'] ?? 'Nome Desconhecido',
+            imageUrl:
+                exerciseDetails?['video_url'] ?? 'https://placehold.co/60',
+
             sets: item['sets'] ?? 3,
             repetitions: item['repetitions'] ?? 10,
           ),
         );
       }
-      
-      _exercises = loadedItems;
 
+      _exercises = loadedItems;
     } else {
-      _showSnackbar('Treino não encontrado ou erro de carregamento.', isError: true);
+      _showSnackbar(
+        'Treino não encontrado ou erro de carregamento.',
+        isError: true,
+      );
     }
-    
+
     setState(() {
       _isLoading = false;
     });
@@ -108,7 +119,9 @@ class _CreateWorkoutScreenState extends State<CreateWorkoutScreen> {
       return;
     }
 
-    setState(() { _isSaving = true; });
+    setState(() {
+      _isSaving = true;
+    });
 
     try {
       if (widget.workoutId != null) {
@@ -129,12 +142,14 @@ class _CreateWorkoutScreenState extends State<CreateWorkoutScreen> {
         );
         _showSnackbar('Treino salvo com sucesso!', isError: false);
       }
-      
-      Navigator.of(context).pop(); 
+
+      Navigator.of(context).pop();
     } catch (e) {
       _showSnackbar('Falha na persistência: ${e.toString()}', isError: true);
     } finally {
-      setState(() { _isSaving = false; });
+      setState(() {
+        _isSaving = false;
+      });
     }
   }
 
@@ -142,25 +157,25 @@ class _CreateWorkoutScreenState extends State<CreateWorkoutScreen> {
     final result = await Navigator.of(context).push(
       MaterialPageRoute(builder: (context) => const ExerciseLibraryScreen()),
     );
-    
+
     if (result != null && result is Map<String, dynamic>) {
       final String? exerciseId = result['id'] as String?;
       final String? exerciseName = result['name'] as String?;
       final String? imageUrl = result['image'] as String?;
-      
+
       if (exerciseId == null || exerciseId.isEmpty) {
         _showSnackbar('Erro: ID do exercício não encontrado.', isError: true);
         return;
       }
-      
+
       final newItem = WorkoutExerciseItem(
         exerciseId: exerciseId,
         exerciseName: exerciseName ?? 'Exercício Novo',
         imageUrl: imageUrl ?? 'https://placehold.co/60',
-        sets: 3, 
+        sets: 3,
         repetitions: 10,
       );
-      
+
       setState(() {
         _exercises.add(newItem);
       });
@@ -187,42 +202,49 @@ class _CreateWorkoutScreenState extends State<CreateWorkoutScreen> {
     return Scaffold(
       backgroundColor: backgroundDark,
       // Se estiver carregando, mostra apenas o spinner
-      body: _isLoading 
-        ? const Center(child: CircularProgressIndicator(color: primaryColor)) 
-        : Column(
-        children: [
-          _buildAppBar(),
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildNameInput(),
-                  const SizedBox(height: 24),
-                  _buildDaySelector(),
-                  const SizedBox(height: 24),
-                  
-                  _exercises.isEmpty
-                      ? _buildEmptyState()
-                      : Column(
-                          children: List.generate(_exercises.length, (index) {
-                            return Padding(
-                              padding: const EdgeInsets.only(bottom: 12.0),
-                              child: _buildExerciseCard(_exercises[index], index),
-                            );
-                          }),
-                        ),
-                ],
-              ),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator(color: primaryColor))
+          : Column(
+              children: [
+                _buildAppBar(),
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildNameInput(),
+                        const SizedBox(height: 24),
+                        _buildDaySelector(),
+                        const SizedBox(height: 24),
+
+                        _exercises.isEmpty
+                            ? _buildEmptyState()
+                            : Column(
+                                children: List.generate(_exercises.length, (
+                                  index,
+                                ) {
+                                  return Padding(
+                                    padding: const EdgeInsets.only(
+                                      bottom: 12.0,
+                                    ),
+                                    child: _buildExerciseCard(
+                                      _exercises[index],
+                                      index,
+                                    ),
+                                  );
+                                }),
+                              ),
+                      ],
+                    ),
+                  ),
+                ),
+                _buildAddExerciseButton(),
+              ],
             ),
-          ),
-          _buildAddExerciseButton(),
-        ],
-      ),
     );
   }
-  
+
   Widget _buildDaySelector() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -231,7 +253,11 @@ class _CreateWorkoutScreenState extends State<CreateWorkoutScreen> {
           padding: EdgeInsets.only(bottom: 12.0),
           child: Text(
             'Dias de Treino',
-            style: TextStyle(color: textDark, fontSize: 16, fontWeight: FontWeight.w500),
+            style: TextStyle(
+              color: textDark,
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+            ),
           ),
         ),
         Wrap(
@@ -250,7 +276,9 @@ class _CreateWorkoutScreenState extends State<CreateWorkoutScreen> {
               },
               child: Chip(
                 label: Text(day),
-                backgroundColor: isSelected ? primaryColor : cardDark.withOpacity(0.4),
+                backgroundColor: isSelected
+                    ? primaryColor
+                    : cardDark.withOpacity(0.4),
                 labelStyle: TextStyle(
                   color: isSelected ? backgroundDark : textDark,
                   fontWeight: FontWeight.w600,
@@ -272,31 +300,35 @@ class _CreateWorkoutScreenState extends State<CreateWorkoutScreen> {
 
   // Separar a AppBar para melhor legibilidade
   Widget _buildAppBar() {
-      return AppBar(
-        backgroundColor: backgroundDark,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: textDark),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-        centerTitle: true,
-        title: Text(
-          widget.workoutId != null ? 'Editar Treino' : 'Criar Novo Treino', 
-          style: const TextStyle(color: textDark, fontWeight: FontWeight.bold)
-        ),
-        actions: [
-          TextButton(
-            onPressed: _exercises.isNotEmpty && !_isSaving ? _saveWorkout : null,
-            child: Text(
-              _isSaving ? 'Salvando...' : (widget.workoutId != null ? 'Atualizar' : 'Salvar'),
-              style: TextStyle(
-                color: _exercises.isNotEmpty && !_isSaving ? secondaryColor : Colors.grey,
-                fontWeight: FontWeight.bold,
-              ),
+    return AppBar(
+      backgroundColor: backgroundDark,
+      elevation: 0,
+      leading: IconButton(
+        icon: const Icon(Icons.arrow_back, color: textDark),
+        onPressed: () => Navigator.of(context).pop(),
+      ),
+      centerTitle: true,
+      title: Text(
+        widget.workoutId != null ? 'Editar Treino' : 'Criar Novo Treino',
+        style: const TextStyle(color: textDark, fontWeight: FontWeight.bold),
+      ),
+      actions: [
+        TextButton(
+          onPressed: _exercises.isNotEmpty && !_isSaving ? _saveWorkout : null,
+          child: Text(
+            _isSaving
+                ? 'Salvando...'
+                : (widget.workoutId != null ? 'Atualizar' : 'Salvar'),
+            style: TextStyle(
+              color: _exercises.isNotEmpty && !_isSaving
+                  ? secondaryColor
+                  : Colors.grey,
+              fontWeight: FontWeight.bold,
             ),
           ),
-        ],
-      );
+        ),
+      ],
+    );
   }
 
   Widget _buildNameInput() {
@@ -305,7 +337,10 @@ class _CreateWorkoutScreenState extends State<CreateWorkoutScreen> {
       children: [
         const Padding(
           padding: EdgeInsets.only(bottom: 8.0),
-          child: Text('Nome do Treino', style: TextStyle(color: textDark, fontWeight: FontWeight.w500)),
+          child: Text(
+            'Nome do Treino',
+            style: TextStyle(color: textDark, fontWeight: FontWeight.w500),
+          ),
         ),
         Container(
           height: 56,
@@ -347,38 +382,46 @@ class _CreateWorkoutScreenState extends State<CreateWorkoutScreen> {
               color: backgroundDark.withOpacity(0.8),
               borderRadius: BorderRadius.circular(8),
               image: DecorationImage(
-                image: NetworkImage(item.imageUrl), 
+                image: NetworkImage(item.imageUrl),
                 fit: BoxFit.cover,
               ),
             ),
           ),
           const SizedBox(width: 16),
-          
+
           // Detalhes e Controles de Série/Repetição
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  item.exerciseName, 
-                  style: const TextStyle(color: textDark, fontSize: 16, fontWeight: FontWeight.w600),
+                  item.exerciseName,
+                  style: const TextStyle(
+                    color: textDark,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
                 const SizedBox(height: 8),
-                
+
                 // Séries
                 _buildRepSetControl('Séries:', item.sets, (newValue) {
-                  setState(() { item.sets = newValue; });
+                  setState(() {
+                    item.sets = newValue;
+                  });
                 }),
                 const SizedBox(height: 4),
-                
+
                 // Repetições
                 _buildRepSetControl('Reps:', item.repetitions, (newValue) {
-                  setState(() { item.repetitions = newValue; });
+                  setState(() {
+                    item.repetitions = newValue;
+                  });
                 }),
               ],
             ),
           ),
-          
+
           // Botões de Ação (Deletar e Reordenar)
           Column(
             children: [
@@ -387,7 +430,11 @@ class _CreateWorkoutScreenState extends State<CreateWorkoutScreen> {
                 onPressed: () => _deleteExercise(index),
               ),
               const SizedBox(height: 8),
-              Icon(Icons.drag_indicator, color: subtextDark, size: 24), // Ícone de drag para reordenar
+              Icon(
+                Icons.drag_indicator,
+                color: subtextDark,
+                size: 24,
+              ), // Ícone de drag para reordenar
             ],
           ),
         ],
@@ -395,7 +442,11 @@ class _CreateWorkoutScreenState extends State<CreateWorkoutScreen> {
     );
   }
 
-  Widget _buildRepSetControl(String label, int currentValue, Function(int) onChange) {
+  Widget _buildRepSetControl(
+    String label,
+    int currentValue,
+    Function(int) onChange,
+  ) {
     return Wrap(
       crossAxisAlignment: WrapCrossAlignment.center,
       spacing: 8.0,
@@ -418,14 +469,18 @@ class _CreateWorkoutScreenState extends State<CreateWorkoutScreen> {
                   padding: EdgeInsets.zero,
                   iconSize: 16,
                   icon: const Icon(Icons.remove, color: textDark),
-                  onPressed: () => onChange(currentValue > 1 ? currentValue - 1 : 1),
+                  onPressed: () =>
+                      onChange(currentValue > 1 ? currentValue - 1 : 1),
                 ),
               ),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 8.0),
                 child: Text(
                   currentValue.toString(),
-                  style: const TextStyle(color: textDark, fontWeight: FontWeight.w600),
+                  style: const TextStyle(
+                    color: textDark,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
               SizedBox(
@@ -454,7 +509,11 @@ class _CreateWorkoutScreenState extends State<CreateWorkoutScreen> {
           const SizedBox(height: 16),
           Text(
             'Comece a montar seu treino',
-            style: const TextStyle(color: textDark, fontSize: 18, fontWeight: FontWeight.bold),
+            style: const TextStyle(
+              color: textDark,
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
           ),
           const SizedBox(height: 8),
           Text(
@@ -484,7 +543,11 @@ class _CreateWorkoutScreenState extends State<CreateWorkoutScreen> {
           ),
           child: const Text(
             'Adicionar Exercício',
-            style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ),
       ),

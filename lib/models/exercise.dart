@@ -3,17 +3,21 @@ import 'package:flutter/material.dart';
 String _toTitleCase(String text) {
   if (text.isEmpty) return text;
   // Converte de MAIÚSCULAS (DB) para a primeira letra maiúscula (UI)
-  return text.toLowerCase().split('_').map((word) {
-    if (word.isEmpty) return '';
-    return word[0].toUpperCase() + word.substring(1);
-  }).join(' ');
+  return text
+      .toLowerCase()
+      .split('_')
+      .map((word) {
+        if (word.isEmpty) return '';
+        return word[0].toUpperCase() + word.substring(1);
+      })
+      .join(' ');
 }
 
 // Função auxiliar para mapear o nível de dificuldade para uma cor visual
 Color _getLevelColor(String level) {
   switch (level.toLowerCase()) {
     case 'iniciante':
-      return Colors.green;
+      return const Color(0xFF007AFF);
     case 'intermediário':
       return Colors.yellow.shade700;
     case 'avançado':
@@ -53,7 +57,8 @@ class Exercise {
       description: json['description'] as String? ?? 'Sem descrição.',
       muscleGroup: _toTitleCase(json['muscle_group'] as String? ?? 'Geral'),
       subgroup: _toTitleCase(json['subgroup'] as String? ?? 'Geral'),
-      videoUrl: json['video_url'] as String? ?? 'https://via.placeholder.com/60',
+      videoUrl:
+          json['video_url'] as String? ?? 'https://via.placeholder.com/60',
       level: json['level'] as String? ?? 'Iniciante',
     );
   }
@@ -66,7 +71,7 @@ class Exercise {
       'level': level,
       'group': muscleGroup,
       'subgroup': subgroup,
-      'image': videoUrl, 
+      'image': videoUrl,
       'level_color': levelColor,
     };
   }

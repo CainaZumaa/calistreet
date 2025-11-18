@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:material_symbols_icons/material_symbols_icons.dart'; // Importe para ícones do Material Symbols
 import 'goal_selection_screen.dart';
 import '../../models/user_onboarding_data.dart';
@@ -14,7 +13,7 @@ const Color borderDark = Color(0xFF2E2E30); // Borda
 
 class PersonalInfoScreen extends StatefulWidget {
   final UserOnboardingData onboardingData;
-  
+
   const PersonalInfoScreen({super.key, required this.onboardingData});
 
   @override
@@ -34,15 +33,19 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
     'Feminino': 'feminino',
     'Não informar': 'nao_informar',
   };
-  
+
   @override
   void initState() {
     super.initState();
     // Inicializa os controllers com dados existentes ou padrão '0'
-    _pesoController = TextEditingController(text: (widget.onboardingData.weight ?? 0).toString());
-    _alturaController = TextEditingController(text: (widget.onboardingData.height ?? 0).toString());
+    _pesoController = TextEditingController(
+      text: (widget.onboardingData.weight ?? 0).toString(),
+    );
+    _alturaController = TextEditingController(
+      text: (widget.onboardingData.height ?? 0).toString(),
+    );
     _selectedDate = widget.onboardingData.dateOfBirth;
-    
+
     // Inicializa com o label correspondente ao value armazenado
     _generoSelecionado = _genderOptions.entries
         .firstWhere(
@@ -58,7 +61,7 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
     _alturaController.dispose();
     super.dispose();
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -68,11 +71,14 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
           children: [
             // Header (Ícone de Voltar)
             _buildHeader(),
-            
+
             // Conteúdo Principal
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 4,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -102,7 +108,11 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
       child: Row(
         children: [
           IconButton(
-            icon: const Icon(Icons.arrow_back_ios_new, color: textDark, size: 20),
+            icon: const Icon(
+              Icons.arrow_back_ios_new,
+              color: textDark,
+              size: 20,
+            ),
             onPressed: () {
               Navigator.of(context).pop();
             },
@@ -196,7 +206,11 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
     );
   }
 
-  Widget _buildInputCard(String label, String suffix, TextEditingController controller) {
+  Widget _buildInputCard(
+    String label,
+    String suffix,
+    TextEditingController controller,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -230,7 +244,9 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
                     decoration: InputDecoration(
                       border: InputBorder.none,
                       hintText: '0',
-                      hintStyle: TextStyle(color: subtleTextDark.withOpacity(0.5)),
+                      hintStyle: TextStyle(
+                        color: subtleTextDark.withOpacity(0.5),
+                      ),
                     ),
                   ),
                 ),
@@ -255,7 +271,7 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
       context: context,
       initialDate: _selectedDate ?? DateTime.now(),
       firstDate: DateTime(1900), // Limite inferior razoável
-      lastDate: DateTime.now(),  // Não permite datas futuras
+      lastDate: DateTime.now(), // Não permite datas futuras
       builder: (context, child) {
         return Theme(
           // Aplica o tema escuro ao Date Picker para combinar com o app
@@ -274,7 +290,7 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
         );
       },
     );
-    
+
     if (picked != null && picked != _selectedDate) {
       setState(() {
         _selectedDate = picked;
@@ -303,7 +319,8 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
           ),
         ),
         GestureDetector(
-          onTap: () => _selectDate(context), // <--- CHAMADA AGORA ESTÁ INTERATIVA
+          onTap: () =>
+              _selectDate(context), // <--- CHAMADA AGORA ESTÁ INTERATIVA
           child: Container(
             height: 56,
             decoration: BoxDecoration(
@@ -370,7 +387,7 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
 
   Widget _buildGenderButton(String label) {
     bool isSelected = _generoSelecionado == label;
-    
+
     return GestureDetector(
       onTap: () {
         setState(() {
@@ -393,7 +410,7 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
                     color: primaryColor.withOpacity(0.3),
                     blurRadius: 4,
                     offset: const Offset(0, 2),
-                  )
+                  ),
                 ]
               : null,
         ),
@@ -452,7 +469,9 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
     if (weight == null || height == null || _selectedDate == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Por favor, preencha Peso, Altura e Data de Nascimento.'),
+          content: Text(
+            'Por favor, preencha Peso, Altura e Data de Nascimento.',
+          ),
           backgroundColor: Color(0xFFE53935),
         ),
       );
@@ -463,15 +482,14 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
     widget.onboardingData.weight = weight;
     widget.onboardingData.height = height;
     widget.onboardingData.dateOfBirth = _selectedDate;
-    
+
     widget.onboardingData.gender = _genderOptions[_generoSelecionado];
 
     // 2. Navega para a próxima tela
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (context) => GoalSelectionScreen(
-          onboardingData: widget.onboardingData,
-        ),
+        builder: (context) =>
+            GoalSelectionScreen(onboardingData: widget.onboardingData),
       ),
     );
   }
