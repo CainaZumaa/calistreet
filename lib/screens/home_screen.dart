@@ -6,8 +6,9 @@ import 'profile_screen.dart';
 import 'progress_screen.dart';
 import 'workout_in_progress_screen.dart';
 import 'my_workouts_screen.dart';
-import 'package:intl/intl.dart'; 
+import 'package:intl/intl.dart';
 import '../services/workout_service.dart';
+import '../utils/logger.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -34,14 +35,14 @@ class _HomeScreenState extends State<HomeScreen> {
     final userData = AuthService.currentUser;
     if (userData != null) {
       final userId = userData['user_id'] as String;
-      
+
       // 1. Buscar dados do perfil
       final profile = await AuthService.fetchUserProfile(userId);
 
       setState(() {
         _isLoading = false;
         _userProfile = profile;
-        
+
         // 2. Mensagem de boas-vindas com o Nome
         if (profile != null && profile.containsKey('name')) {
           _welcomeMessage = 'Olá, ${profile['name'].toString().split(' ')[0]}!';
@@ -59,23 +60,31 @@ class _HomeScreenState extends State<HomeScreen> {
   void _loadTodaysWorkout() async {
     final userId = AuthService.currentUser?['user_id'];
     if (userId == null) return;
-    
+
     // 1. Obtém o dia atual em formato de 3 letras (ex: 'seg', 'ter', 'sáb')
     // É CRUCIAL USAR 'pt_BR' para corresponder aos dados salvos no banco.
-    final currentDayName = DateFormat('EEE', 'pt_BR').format(DateTime.now()); 
-    final String dayAbbr = currentDayName.substring(0, 3); // Obtém as 3 primeiras letras
-    
-    // 2. Formata para o padrão (Ex: 'Seg', 'Ter')
-    final String finalDayFilter = dayAbbr.substring(0, 1).toUpperCase() + dayAbbr.substring(1);
+    final currentDayName = DateFormat('EEE', 'pt_BR').format(DateTime.now());
+    final String dayAbbr = currentDayName.substring(
+      0,
+      3,
+    ); // Obtém as 3 primeiras letras
 
-    // ************** DEBUG CRÍTICO **************
-    print('DEBUG: Filtrando por User ID: $userId e Dia: $finalDayFilter');
+    // 2. Formata para o padrão (Ex: 'Seg', 'Ter')
+    final String finalDayFilter =
+        dayAbbr.substring(0, 1).toUpperCase() + dayAbbr.substring(1);
+
+    Logger.debug(
+      'HomeScreen',
+      'Buscando treinos do dia',
+      extra: {'user_id': userId, 'day': finalDayFilter},
+    );
 
     final WorkoutService service = WorkoutService();
 
     // Busca o treino agendado para o dia de hoje
     // A função retorna List<Map<...>>
-    final List<Map<String, dynamic>> workouts = await service.fetchUserWorkoutsByDay(userId as String, finalDayFilter);
+    final List<Map<String, dynamic>> workouts = await service
+        .fetchUserWorkoutsByDay(userId as String, finalDayFilter);
 
     setState(() {
       // Atribui o primeiro treino encontrado à variável de estado, ou null se a lista estiver vazia.
@@ -129,7 +138,9 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: Color(0xFF007AFF)))
+          ? const Center(
+              child: CircularProgressIndicator(color: Color(0xFF007AFF)),
+            )
           : SingleChildScrollView(
               padding: const EdgeInsets.all(16),
               child: Column(
@@ -151,7 +162,7 @@ class _HomeScreenState extends State<HomeScreen> {
     if (_todaysWorkout == null) {
       return const SizedBox.shrink(); // Não mostra card se não houver treino agendado
     }
-    
+
     final String workoutName = _todaysWorkout!['name'] ?? 'Treino Agendado';
     return Container(
       width: double.infinity,
@@ -173,10 +184,14 @@ class _HomeScreenState extends State<HomeScreen> {
                 topRight: Radius.circular(16),
               ),
               child: Container(
-                height: 100, 
+                height: 100,
                 color: Colors.blueGrey.shade900,
                 child: const Center(
-                  child: Icon(Icons.directions_run, color: Colors.white54, size: 48),
+                  child: Icon(
+                    Icons.directions_run,
+                    color: Colors.white54,
+                    size: 48,
+                  ),
                 ),
               ),
             ),
@@ -224,7 +239,8 @@ class _HomeScreenState extends State<HomeScreen> {
                           // Navega para a tela de treino em andamento
                           Navigator.of(context).push(
                             MaterialPageRoute(
-                              builder: (context) => const WorkoutInProgressScreen(),
+                              builder: (context) =>
+                                  const WorkoutInProgressScreen(),
                             ),
                           );
                         },
@@ -305,9 +321,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return GestureDetector(
       onTap: () {
         Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (context) => const CreateWorkoutScreen(),
-          ),
+          MaterialPageRoute(builder: (context) => const CreateWorkoutScreen()),
         );
       },
       child: Container(
@@ -361,7 +375,7 @@ class _HomeScreenState extends State<HomeScreen> {
         border: Border(top: BorderSide(color: Color(0xFF2C2C2C), width: 1)),
       ),
       child: BottomNavigationBar(
-        backgroundColor:const Color(0xFF000000),
+        backgroundColor: const Color(0xFF000000),
         selectedItemColor: const Color(0xFF007AFF),
         unselectedItemColor: Colors.grey,
         currentIndex: _selectedIndex,
@@ -393,9 +407,9 @@ class _HomeScreenState extends State<HomeScreen> {
         // Já está na tela home - não fazer nada
         break;
       case 1:
-        Navigator.of(context).push(
-          MaterialPageRoute(builder: (context) => const ProgressScreen()),
-        );
+        Navigator.of(
+          context,
+        ).push(MaterialPageRoute(builder: (context) => const ProgressScreen()));
         break;
       case 2:
         // TODO: Navegar para Desafios

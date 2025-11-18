@@ -3,6 +3,8 @@ import 'package:supabase/supabase.dart' as supabase_core;
 import 'package:crypto/crypto.dart';
 import 'dart:convert';
 import '../config/supabase_config.dart';
+import '../utils/logger.dart';
+import '../utils/error_handler.dart';
 
 class AuthService {
   static SupabaseClient? _supabase;
@@ -24,10 +26,22 @@ class AuthService {
   }
 
   static Future<void> initialize() async {
-    await Supabase.initialize(
-      url: SupabaseConfig.url,
-      anonKey: SupabaseConfig.anonKey,
-    );
+    try {
+      Logger.info('AuthService', 'Inicializando Supabase...');
+      await Supabase.initialize(
+        url: SupabaseConfig.url,
+        anonKey: SupabaseConfig.anonKey,
+      );
+      Logger.info('AuthService', 'Supabase inicializado com sucesso');
+    } catch (e, stackTrace) {
+      Logger.error(
+        'AuthService',
+        'Falha ao inicializar Supabase',
+        error: e,
+        stackTrace: stackTrace,
+      );
+      rethrow;
+    }
   }
 
   static String _hashPassword(String password) {
@@ -42,8 +56,13 @@ class AuthService {
     required String name,
   }) async {
     try {
+      Logger.info(
+        'AuthService',
+        'Iniciando cadastro de usuário',
+        extra: {'email': email},
+      );
       final hashedPassword = _hashPassword(password);
-      final serviceClient = createServiceRoleClient(); // Usa a função pública
+      final serviceClient = createServiceRoleClient();
 
       final result = await serviceClient.from('users').insert({
         'email': email,
@@ -52,6 +71,11 @@ class AuthService {
 
       if (result.isNotEmpty) {
         final user = result.first;
+        Logger.info(
+          'AuthService',
+          'Usuário cadastrado com sucesso',
+          extra: {'user_id': user['id']},
+        );
         return {
           'success': true,
           'user_id': user['id'],
@@ -61,10 +85,19 @@ class AuthService {
           'message': 'Conta criada com sucesso!',
         };
       } else {
-        throw Exception('Falha ao criar conta');
+        throw Exception('Falha ao criar conta - resposta vazia do servidor');
       }
-    } catch (e) {
-      throw Exception('Erro ao criar conta: $e');
+    } catch (e, stackTrace) {
+      Logger.error(
+        'AuthService',
+        'Erro ao criar conta',
+        error: e,
+        stackTrace: stackTrace,
+        extra: {'email': email},
+      );
+      throw Exception(
+        ErrorHandler.handleError(e, stackTrace: stackTrace, context: 'signUp'),
+      );
     }
   }
 
@@ -73,8 +106,9 @@ class AuthService {
     required String password,
   }) async {
     try {
+      Logger.info('AuthService', 'Iniciando login', extra: {'email': email});
       final hashedPassword = _hashPassword(password);
-      final serviceClient = createServiceRoleClient(); // Usa a função pública
+      final serviceClient = createServiceRoleClient();
 
       final userData = await serviceClient
           .from('users')
@@ -84,6 +118,11 @@ class AuthService {
 
       if (userData.isNotEmpty) {
         final user = userData.first;
+        Logger.info(
+          'AuthService',
+          'Login realizado com sucesso',
+          extra: {'user_id': user['id']},
+        );
         return {
           'success': true,
           'user_id': user['id'],
@@ -92,29 +131,57 @@ class AuthService {
           'message': 'Login realizado com sucesso!',
         };
       } else {
+        Logger.warning(
+          'AuthService',
+          'Credenciais inválidas',
+          extra: {'email': email},
+        );
         throw Exception('Email ou senha incorretos');
       }
-    } catch (e) {
-      throw Exception('Erro ao fazer login: $e');
+    } catch (e, stackTrace) {
+      Logger.error(
+        'AuthService',
+        'Erro ao fazer login',
+        error: e,
+        stackTrace: stackTrace,
+        extra: {'email': email},
+      );
+      throw Exception(
+        ErrorHandler.handleError(e, stackTrace: stackTrace, context: 'signIn'),
+      );
     }
   }
 
   static Future<Map<String, dynamic>?> fetchUserProfile(String userId) async {
     try {
+      Logger.debug(
+        'AuthService',
+        'Buscando perfil do usuário',
+        extra: {'user_id': userId},
+      );
       final serviceClient = createServiceRoleClient();
-      
+
       final profileData = await serviceClient
           .from('user_profiles')
           .select('*')
           .eq('user_id', userId)
-          .single(); 
-      
-      // Converte o PostgrestMap (Map<String, dynamic>) para Map<String, dynamic>
+          .single();
+
+      Logger.info(
+        'AuthService',
+        'Perfil encontrado com sucesso',
+        extra: {'user_id': userId},
+      );
       return profileData as Map<String, dynamic>;
-      
-    } catch (e) {
+    } catch (e, stackTrace) {
       // Se a busca falhar (ex: perfil não existe ou erro de conexão), retorna null
-      print('Erro ao buscar perfil: $e');
+      Logger.warning(
+        'AuthService',
+        'Perfil não encontrado ou erro ao buscar',
+        error: e,
+        stackTrace: stackTrace,
+        extra: {'user_id': userId},
+      );
       return null;
     }
   }
