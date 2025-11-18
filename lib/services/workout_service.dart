@@ -12,16 +12,16 @@ class WorkoutService {
   }) async {
     // 1. Obtenção do User ID
     final currentUserId = AuthService.currentUser?['user_id'];
-    
+
     if (currentUserId == null) {
       throw Exception('Usuário não autenticado. Faça login e tente novamente.');
     }
-    
+
     if (items.isEmpty) {
       throw Exception('O treino deve conter pelo menos um exercício.');
     }
-    
-    String? newWorkoutId; 
+
+    String? newWorkoutId;
 
     try {
       // 1. INSERIR NA TABELA 'workouts'
@@ -33,7 +33,7 @@ class WorkoutService {
             'is_template': false,
             'schedule_days': scheduleDays,
           })
-          .select('id'); 
+          .select('id');
 
       if (workoutResponse.isEmpty) {
         throw Exception('Falha ao criar registro principal do treino.');
@@ -49,10 +49,7 @@ class WorkoutService {
           .toList();
 
       // 3. INSERIR EM LOTE NA TABELA 'workout_exercises'
-      await _serviceClient
-          .from('workout_exercises')
-          .insert(itemsToInsert);
-      
+      await _serviceClient.from('workout_exercises').insert(itemsToInsert);
     } catch (e) {
       // 4. TRATAMENTO DE ERRO COM REVERSÃO (ROLLBACK)
       if (newWorkoutId != null) {
@@ -63,8 +60,9 @@ class WorkoutService {
   }
 
   Future<List<Map<String, dynamic>>> fetchUserWorkouts(String userId) async {
-    try {final serviceClient = AuthService.createServiceRoleClient();
-      
+    try {
+      final serviceClient = AuthService.createServiceRoleClient();
+
       final List<dynamic> response = await serviceClient
           .from('workouts')
           .select('id, name')
@@ -72,7 +70,6 @@ class WorkoutService {
 
       // Converte a lista de dynamic para List<Map<String, dynamic>>
       return response.cast<Map<String, dynamic>>();
-
     } catch (e) {
       print('Erro ao buscar treinos: $e');
       return [];
@@ -92,7 +89,6 @@ class WorkoutService {
 
       // O Supabase retorna o JSON do treino, incluindo a lista de exercícios aninhada.
       return response as Map<String, dynamic>?;
-
     } catch (e) {
       print('Erro ao buscar treino: $e');
       return null;
@@ -109,19 +105,19 @@ class WorkoutService {
     if (items.isEmpty) {
       throw Exception('O treino deve conter pelo menos um exercício.');
     }
-    
+
     // 1. ATUALIZAR TABELA 'workouts'
     await _serviceClient
         .from('workouts')
-        .update({
-          'name': workoutName,
-          'schedule_days': scheduleDays,
-        })
+        .update({'name': workoutName, 'schedule_days': scheduleDays})
         .eq('id', workoutId);
-        
+
     // 2. EXCLUIR ITENS ANTIGOS e INSERIR NOVOS
-    await _serviceClient.from('workout_exercises').delete().eq('workout_id', workoutId);
-        
+    await _serviceClient
+        .from('workout_exercises')
+        .delete()
+        .eq('workout_id', workoutId);
+
     // 3. PREPARAR E INSERIR NOVOS ITENS EM LOTE
     final List<Map<String, dynamic>> itemsToInsert = items
         .asMap()
@@ -135,22 +131,47 @@ class WorkoutService {
   }
 
   // Função para buscar treinos agendados para um dia específico
-  Future<List<Map<String, dynamic>>> fetchUserWorkoutsByDay(String userId, String currentDay) async {
+  Future<List<Map<String, dynamic>>> fetchUserWorkoutsByDay(
+    String userId,
+    String currentDay,
+  ) async {
     try {
-      final serviceClient = AuthService.createServiceRoleClient(); 
+      final serviceClient = AuthService.createServiceRoleClient();
+      final String currentDay = _getCurrentDayString();
 
       final List<dynamic> response = await serviceClient
           .from('workouts')
-          .select('id, name, created_by_id, schedule_days') 
-          .eq('created_by_id', userId) 
+          .select('id, name, created_by_id, schedule_days')
+          .eq('created_by_id', userId)
           .contains('schedule_days', [currentDay])
           .order('id', ascending: false);
 
       return response.cast<Map<String, dynamic>>();
-
     } catch (e) {
       print('Erro ao buscar treinos por dia: $e');
-      return []; 
+      return [];
+    }
+  }
+
+  String _getCurrentDayString() {
+    final now = DateTime.now();
+    switch (now.weekday) {
+      case DateTime.monday:
+        return 'Seg';
+      case DateTime.tuesday:
+        return 'Ter';
+      case DateTime.wednesday:
+        return 'Qua';
+      case DateTime.thursday:
+        return 'Qui';
+      case DateTime.friday:
+        return 'Sex';
+      case DateTime.saturday:
+        return 'Sab';
+      case DateTime.sunday:
+        return 'Dom';
+      default:
+        return '';
     }
   }
 }
