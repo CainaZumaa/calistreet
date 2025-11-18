@@ -34,13 +34,38 @@ class UserOnboardingData {
       'weight': weight,
       'height': height,
       'date_of_birth': dateOfBirth?.toIso8601String().split('T').first,
-      'gender': gender,
+      'gender': _mapGenderToEnum(gender),
       'goal': goal,
-      'level': level,
+      'level': _mapLevelToEnum(level),
       'training_location': trainingLocation,
       'equipment': equipment,
       'onboarding_complete': true,
       'updated_at': DateTime.now().toIso8601String(),
     };
+  }
+
+  String _mapGenderToEnum(String? gender) {
+    switch (gender?.toLowerCase()) {
+      case 'masculino':
+        return 'male';
+      case 'feminino':  
+        return 'female';
+      case 'nao informar':
+      default:
+        return 'other';
+    }
+  }
+  
+  String _mapLevelToEnum(String? level) {
+    switch (level?.toLowerCase()) {
+      case 'iniciante':
+        return 'beginner';
+      case 'intermediario':  
+        return 'intermediate';
+      case 'avancado':
+        return 'advanced';
+      default:
+        return 'beginner';
+    }
   }
 }
