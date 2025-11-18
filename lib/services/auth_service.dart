@@ -102,16 +102,15 @@ class AuthService {
   static Future<Map<String, dynamic>?> fetchUserProfile(String userId) async {
     try {
       final serviceClient = createServiceRoleClient();
-      
+
       final profileData = await serviceClient
           .from('user_profiles')
           .select('*')
           .eq('user_id', userId)
-          .single(); 
-      
+          .single();
+
       // Converte o PostgrestMap (Map<String, dynamic>) para Map<String, dynamic>
-      return profileData as Map<String, dynamic>;
-      
+      return profileData;
     } catch (e) {
       // Se a busca falhar (ex: perfil não existe ou erro de conexão), retorna null
       print('Erro ao buscar perfil: $e');
