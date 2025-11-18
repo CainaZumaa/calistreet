@@ -120,8 +120,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-      body: _isLoading
-          ? const Center(
+      body: _isLoading ? const Center(
               child: CircularProgressIndicator(color: Color(0xFF007AFF)),
             )
           : SingleChildScrollView(
