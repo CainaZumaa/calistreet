@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:material_symbols_icons/material_symbols_icons.dart';
 import 'equipment_selection_screen.dart';
 import '../../models/user_onboarding_data.dart';
 
@@ -26,6 +25,7 @@ class _GoalSelectionScreenState extends State<GoalSelectionScreen> {
     'Perder peso', 
     'Melhorar resistência'
   ];
+
   final List<String> _levels = [
     'Iniciante',
     'Intermediário',

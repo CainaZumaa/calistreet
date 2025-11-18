@@ -1,6 +1,6 @@
+import 'package:calistreet/screens/home_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:material_symbols_icons/material_symbols_icons.dart';
 
 import 'profile_screen.dart';
 
@@ -21,6 +21,8 @@ class ProgressScreen extends StatefulWidget {
 }
 
 class _ProgressScreenState extends State<ProgressScreen> {
+  final int _selectedIndex = 1;
+
   // Dados simulados para o resumo da semana
   final Map<String, double> _weeklyData = {
     'DOM': 40, 
@@ -318,9 +320,6 @@ class _ProgressScreenState extends State<ProgressScreen> {
   }
 
   Widget _buildBottomNavigation() {
-    // Usamos o índice 1 (Progresso) como ativo/selecionado
-    const int progressIndex = 1;
-
     return Container(
       decoration: BoxDecoration(
         color: backgroundDark,
@@ -330,11 +329,9 @@ class _ProgressScreenState extends State<ProgressScreen> {
         backgroundColor: backgroundDark,
         selectedItemColor: primaryColor,
         unselectedItemColor: Colors.grey,
-        currentIndex: progressIndex, // Define 'Progresso' como ativo
+        currentIndex: _selectedIndex,
         onTap: (index) {
-          // A lógica principal de navegação deve estar na HomeScreen,
-          // mas vamos replicar a estrutura para permitir a navegação de volta.
-          if (index != progressIndex) {
+          if (index != _selectedIndex) {
             _navigateToScreen(index);
           }
         },
@@ -357,21 +354,25 @@ class _ProgressScreenState extends State<ProgressScreen> {
   void _navigateToScreen(int index) {
     switch (index) {
       case 0:
-        // Volta para Home e reseta o índice
-        Navigator.of(context).pop();
-        break;
-      case 1:
-        Navigator.of(context).push(
-          MaterialPageRoute(builder: (context) => const ProgressScreen()),
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (context) => const HomeScreen()),
         );
         break;
+      case 1:
+        // Já está na tela de progresso
+        break;
       case 2:
-        // TODO: Navegar para Desafios
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Tela de Desafios em desenvolvimento.'),
+            backgroundColor: primaryColor,
+          ),
+        );
         break;
       case 3:
-        Navigator.of(
-          context,
-        ).push(MaterialPageRoute(builder: (context) => const ProfileScreen()));
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (context) => const ProfileScreen()),
+        );
         break;
     }
   }
