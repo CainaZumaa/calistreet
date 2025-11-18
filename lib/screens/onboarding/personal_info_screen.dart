@@ -28,6 +28,13 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
   DateTime? _selectedDate;
   late String _generoSelecionado;
 
+  // Map para valores de gênero (label -> value)
+  final Map<String, String> _genderOptions = {
+    'Masculino': 'masculino',
+    'Feminino': 'feminino',
+    'Não informar': 'nao_informar',
+  };
+  
   @override
   void initState() {
     super.initState();
@@ -35,7 +42,14 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
     _pesoController = TextEditingController(text: (widget.onboardingData.weight ?? 0).toString());
     _alturaController = TextEditingController(text: (widget.onboardingData.height ?? 0).toString());
     _selectedDate = widget.onboardingData.dateOfBirth;
-    _generoSelecionado = widget.onboardingData.gender ?? 'Feminino';
+    
+    // Inicializa com o label correspondente ao value armazenado
+    _generoSelecionado = _genderOptions.entries
+        .firstWhere(
+          (entry) => entry.value == widget.onboardingData.gender,
+          orElse: () => _genderOptions.entries.first,
+        )
+        .key;
   }
 
   @override
@@ -339,13 +353,16 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
         ),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            _buildGenderButton('Masculino'),
-            const SizedBox(width: 8),
-            _buildGenderButton('Feminino'),
-            const SizedBox(width: 8),
-            _buildGenderButton('Não informar'),
-          ],
+          children: _genderOptions.keys.map((label) {
+            return Expanded(
+              child: Padding(
+                padding: EdgeInsets.only(
+                  right: label == _genderOptions.keys.last ? 0 : 8,
+                ),
+                child: _buildGenderButton(label),
+              ),
+            );
+          }).toList(),
         ),
       ],
     );
@@ -354,40 +371,38 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
   Widget _buildGenderButton(String label) {
     bool isSelected = _generoSelecionado == label;
     
-    return Expanded(
-      child: GestureDetector(
-        onTap: () {
-          setState(() {
-            _generoSelecionado = label;
-          });
-        },
-        child: Container(
-          height: 56,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: isSelected ? primaryColor : surfaceDark,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: isSelected ? primaryColor : borderDark,
-              width: isSelected ? 2 : 1,
-            ),
-            boxShadow: isSelected
-                ? [
-                    BoxShadow(
-                      color: primaryColor.withOpacity(0.3),
-                      blurRadius: 4,
-                      offset: const Offset(0, 2),
-                    )
-                  ]
-                : null,
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _generoSelecionado = label;
+        });
+      },
+      child: Container(
+        height: 56,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: isSelected ? primaryColor : surfaceDark,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected ? primaryColor : borderDark,
+            width: isSelected ? 2 : 1,
           ),
-          child: Text(
-            label,
-            style: TextStyle(
-              color: isSelected ? backgroundDark : textDark, // Texto preto no botão selecionado
-              fontSize: 16,
-              fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-            ),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: primaryColor.withOpacity(0.3),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  )
+                ]
+              : null,
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: isSelected ? backgroundDark : textDark,
+            fontSize: 16,
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
           ),
         ),
       ),
@@ -438,7 +453,7 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Por favor, preencha Peso, Altura e Data de Nascimento.'),
-          backgroundColor: Color(0xFFE53935), // Cor de erro (vermelho)
+          backgroundColor: Color(0xFFE53935),
         ),
       );
       return;
@@ -448,13 +463,14 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
     widget.onboardingData.weight = weight;
     widget.onboardingData.height = height;
     widget.onboardingData.dateOfBirth = _selectedDate;
-    widget.onboardingData.gender = _generoSelecionado;
+    
+    widget.onboardingData.gender = _genderOptions[_generoSelecionado];
 
-    // 2. Navega para a próxima tela, passando o DTO atualizado
+    // 2. Navega para a próxima tela
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (context) => GoalSelectionScreen(
-          onboardingData: widget.onboardingData, // Passa o DTO
+          onboardingData: widget.onboardingData,
         ),
       ),
     );
