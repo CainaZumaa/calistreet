@@ -20,7 +20,6 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
   String _welcomeMessage = 'Olá, Usuário!';
-  Map<String, dynamic>? _userProfile;
   Map<String, dynamic>? _todaysWorkout;
   bool _isLoading = true;
 
@@ -41,7 +40,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
       setState(() {
         _isLoading = false;
-        _userProfile = profile;
 
         // 2. Mensagem de boas-vindas com o Nome
         if (profile != null && profile.containsKey('name')) {
