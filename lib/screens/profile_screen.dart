@@ -1,3 +1,4 @@
+import 'package:calistreet/screens/home_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../services/auth_service.dart';
@@ -16,7 +17,7 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  int _selectedIndex = 3;
+  final int _selectedIndex = 3;
   Map<String, dynamic>? _userProfile;
   bool _isLoading = true;
 
@@ -313,10 +314,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
         unselectedItemColor: Colors.grey,
         currentIndex: _selectedIndex,
         onTap: (index) {
-          setState(() {
-            _selectedIndex = index;
-          });
-          _navigateToScreen(index);
+          if (index != _selectedIndex) {
+            _navigateToScreen(index);
+          }
         },
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Início'),
@@ -337,16 +337,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
   void _navigateToScreen(int index) {
     switch (index) {
       case 0:
-        // Volta para Home e reseta o índice
-        Navigator.of(context).pop();
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (context) => const HomeScreen()),
+        );
         break;
       case 1:
-        Navigator.of(context).push(
+        Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (context) => const ProgressScreen()),
         );
         break;
       case 2:
         // TODO: Navegar para Desafios
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Tela de Desafios em desenvolvimento.'),
+            backgroundColor: primaryBlue,
+          ),
+        );
         break;
       case 3:
         // Já está na tela de perfil
