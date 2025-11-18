@@ -396,10 +396,12 @@ class _CreateWorkoutScreenState extends State<CreateWorkoutScreen> {
   }
 
   Widget _buildRepSetControl(String label, int currentValue, Function(int) onChange) {
-    return Row(
+    return Wrap(
+      crossAxisAlignment: WrapCrossAlignment.center,
+      spacing: 8.0,
+      runSpacing: 4.0,
       children: [
         Text(label, style: TextStyle(color: subtextDark, fontSize: 14)),
-        const SizedBox(width: 16),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 4),
           decoration: BoxDecoration(
@@ -407,6 +409,7 @@ class _CreateWorkoutScreenState extends State<CreateWorkoutScreen> {
             borderRadius: BorderRadius.circular(16),
           ),
           child: Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
               SizedBox(
                 width: 24,
@@ -418,9 +421,12 @@ class _CreateWorkoutScreenState extends State<CreateWorkoutScreen> {
                   onPressed: () => onChange(currentValue > 1 ? currentValue - 1 : 1),
                 ),
               ),
-              Text(
-                currentValue.toString(),
-                style: const TextStyle(color: textDark, fontWeight: FontWeight.w600),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                child: Text(
+                  currentValue.toString(),
+                  style: const TextStyle(color: textDark, fontWeight: FontWeight.w600),
+                ),
               ),
               SizedBox(
                 width: 24,
@@ -440,22 +446,24 @@ class _CreateWorkoutScreenState extends State<CreateWorkoutScreen> {
   }
 
   Widget _buildEmptyState() {
-    return Column(
-      children: [
-        const SizedBox(height: 50),
-        Icon(Icons.fitness_center_outlined, color: subtextDark, size: 60),
-        const SizedBox(height: 16),
-        Text(
-          'Comece a montar seu treino',
-          style: const TextStyle(color: textDark, fontSize: 18, fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          'Adicione exercícios para criar uma rotina personalizada.',
-          style: TextStyle(color: subtextDark, fontSize: 14),
-          textAlign: TextAlign.center,
-        ),
-      ],
+    return Center(
+      child: Column(
+        children: [
+          const SizedBox(height: 50),
+          Icon(Icons.fitness_center_outlined, color: subtextDark, size: 60),
+          const SizedBox(height: 16),
+          Text(
+            'Comece a montar seu treino',
+            style: const TextStyle(color: textDark, fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Adicione exercícios para criar uma rotina personalizada.',
+            style: TextStyle(color: subtextDark, fontSize: 14),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
     );
   }
 
