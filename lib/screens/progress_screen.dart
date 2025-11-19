@@ -1,13 +1,19 @@
+import 'dart:collection';
+
+import 'package:calistreet/models/progress.dart';
 import 'package:calistreet/screens/home_screen.dart';
+import 'package:calistreet/services/auth_service.dart';
+import 'package:calistreet/services/progress_service.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:intl/intl.dart';
 
 import 'profile_screen.dart';
 
 // Cores no padrão do seu app
 const Color primaryColor = Color(
   0xFF007AFF,
-); // Azul - Primária para acentuação e gráfico
+); // Azul - Primária para acentuação e gráfico (anteriormente Verde)
 const Color secondaryColor = Color(
   0xFFFF6F00,
 ); // Laranja - Mantido para Conquistas
@@ -28,17 +34,86 @@ class ProgressScreen extends StatefulWidget {
 
 class _ProgressScreenState extends State<ProgressScreen> {
   final int _selectedIndex = 1;
+  final ProgressService _progressService = ProgressService();
 
-  // Dados simulados para o resumo da semana
-  final Map<String, double> _weeklyData = {
-    'DOM': 40,
-    'SEG': 100,
-    'TER': 30,
-    'QUA': 80,
-    'QUI': 40,
-    'SEX': 80,
-    'SAB': 90,
-  };
+  bool _isLoading = true;
+  String? _error;
+  List<Progress> _progressData = [];
+  Map<String, double> _weeklyData = {};
+  int _totalWorkouts = 0;
+  String _totalTime = "0h 0m";
+
+  @override
+  void initState() {
+    super.initState();
+    _initScreen();
+  }
+
+  Future<void> _initScreen() async {
+    try {
+      final userId = AuthService.currentUser?['user_id'] as String?;
+      if (userId == null) {
+        throw Exception("User not logged in.");
+      }
+
+      final progress = await _progressService.getLast7DaysProgress(userId);
+      setState(() {
+        _progressData = progress;
+        _processProgressData();
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _error = "Failed to load progress data.";
+        _isLoading = false;
+      });
+    }
+  }
+
+  void _processProgressData() {
+    _totalWorkouts = _progressData
+        .where((p) => p.status == ProgressStatus.completed)
+        .length;
+
+    int totalSeconds = _progressData
+        .where(
+          (p) =>
+              p.status == ProgressStatus.completed && p.durationSeconds != null,
+        )
+        .fold(0, (sum, p) => sum + p.durationSeconds!);
+
+    int hours = totalSeconds ~/ 3600;
+    int minutes = (totalSeconds % 3600) ~/ 60;
+    _totalTime = "${hours}h ${minutes}m";
+
+    // Calcula o início da semana (segunda-feira)
+    final now = DateTime.now();
+    final startOfWeek = now.subtract(Duration(days: now.weekday - 1));
+    
+    // Prepare data for the last 7 days for the chart (SEG a DOM)
+    _weeklyData = LinkedHashMap.fromIterable(
+      List.generate(7, (i) => startOfWeek.add(Duration(days: i))),
+      key: (date) => DateFormat('E', 'pt_BR').format(date).toUpperCase(),
+      value: (date) => 0.0,
+    );
+
+    // Filtra progresso da semana atual (seg a dom)
+    final endOfWeek = startOfWeek.add(const Duration(days: 6, hours: 23, minutes: 59, seconds: 59));
+    List<Progress> weekProgress = _progressData
+        .where((p) => 
+            p.startDate.isAfter(startOfWeek.subtract(const Duration(seconds: 1))) &&
+            p.startDate.isBefore(endOfWeek.add(const Duration(seconds: 1))))
+        .toList();
+      
+    for (var p in weekProgress) {
+      String day = DateFormat('E', 'pt_BR').format(p.startDate).toUpperCase();
+      if (_weeklyData.containsKey(day)) {
+        _weeklyData[day] =
+            (_weeklyData[day] ?? 0) +
+            (p.durationSeconds ?? 0) / 60.0; // duration in minutes
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -58,26 +133,32 @@ class _ProgressScreenState extends State<ProgressScreen> {
           ),
         ),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            _buildWeeklySummaryCard(),
-            const SizedBox(height: 16),
-            _buildActionButtons(),
-            const SizedBox(height: 16),
-            _buildLatestAchievements(),
-          ],
-        ),
-      ),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : _error != null
+          ? Center(
+              child: Text(_error!, style: const TextStyle(color: Colors.red)),
+            )
+          : SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                children: [
+                  _buildWeeklySummaryCard(),
+                  const SizedBox(height: 16),
+                  _buildActionButtons(),
+                  const SizedBox(height: 16),
+                  _buildLatestAchievements(),
+                ],
+              ),
+            ),
       bottomNavigationBar: _buildBottomNavigation(),
     );
   }
 
   Widget _buildWeeklySummaryCard() {
-    final double maxBarHeight = _weeklyData.values.reduce(
-      (a, b) => a > b ? a : b,
-    );
+    final double maxBarHeight = _weeklyData.values.isEmpty
+        ? 1
+        : _weeklyData.values.reduce((a, b) => a > b ? a : b);
 
     return Container(
       padding: const EdgeInsets.all(24),
@@ -98,18 +179,13 @@ class _ProgressScreenState extends State<ProgressScreen> {
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 16),
-
-          // 1. Métricas Principais
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _buildMetric('12', 'Treinos', primaryColor),
-              _buildMetric('10h 30m', 'Tempo Total', primaryColor),
-              _buildMetric('5,280', 'Calorias', primaryColor),
+              _buildMetric(_totalWorkouts.toString(), 'Treinos', primaryColor),
+              _buildMetric(_totalTime, 'Tempo Total', primaryColor),
             ],
           ),
-
-          // 2. Gráfico de Barras
           const SizedBox(height: 24),
           SizedBox(
             height: 140,
@@ -117,13 +193,16 @@ class _ProgressScreenState extends State<ProgressScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               crossAxisAlignment: CrossAxisAlignment.end,
               children: _weeklyData.entries.map((entry) {
-                // Normaliza a altura da barra em relação ao valor máximo
-                final double normalizedHeight = entry.value / maxBarHeight;
+                final double normalizedHeight = maxBarHeight > 0
+                    ? entry.value / maxBarHeight
+                    : 0.0;
+                final currentDay = DateFormat('E', 'pt_BR').format(DateTime.now()).toUpperCase();
 
                 return _buildBar(
                   heightRatio: normalizedHeight,
                   label: entry.key,
-                  isActive: entry.key == 'QUA',
+                  minutes: entry.value,
+                  isActive: entry.key == currentDay,
                 );
               }).toList(),
             ),
@@ -160,44 +239,62 @@ class _ProgressScreenState extends State<ProgressScreen> {
   Widget _buildBar({
     required double heightRatio,
     required String label,
+    required double minutes,
     bool isActive = false,
   }) {
-    // Define a cor da barra (ativa ou inativa)
-    final barColor = isActive ? primaryColor : primaryColor.withOpacity(0.3);
-    // Altura máxima do gráfico é 100% da altura do SizedBox pai
-    final double barHeight = 100 * heightRatio;
+    final barColor = isActive ? primaryColor : primaryColor.withValues(alpha: 100);
+    // Define altura mínima de 8px para barras sem dados
+    final double barHeight = heightRatio > 0 ? (100 * heightRatio) : 8.0;
 
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.end,
-      children: [
-        Container(
-          width: 14, // Largura fixa para cada barra
-          height: barHeight,
-          decoration: BoxDecoration(
-            color: barColor,
-            borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(3),
-              topRight: Radius.circular(3),
+    return GestureDetector(
+      onTap: () {
+        final hours = minutes ~/ 60;
+        final mins = (minutes % 60).round();
+        final timeText = hours > 0 ? "${hours}h ${mins}m" : "${mins}m";
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              minutes > 0 
+                ? '$label: $timeText de treino'
+                : '$label: Nenhum treino realizado',
+            ),
+            backgroundColor: isActive ? primaryColor : cardDark,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      },
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          Container(
+            width: 14,
+            height: barHeight,
+            decoration: BoxDecoration(
+              color: heightRatio > 0 ? barColor : borderDark,
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(3),
+                topRight: Radius.circular(3),
+              ),
             ),
           ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          label,
-          style: TextStyle(
-            color: isActive ? textDark : subtextDark,
-            fontSize: 13,
-            fontWeight: FontWeight.bold,
+          const SizedBox(height: 8),
+          Text(
+            label,
+            style: TextStyle(
+              color: isActive ? textDark : subtextDark,
+              fontSize: 13,
+              fontWeight: FontWeight.bold,
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
   Widget _buildActionButtons() {
     return Column(
       children: [
-        // Botão Histórico de Treinos
         _buildActionButton(
           title: 'Histórico de Treinos',
           subtitle: 'Veja todos os seus treinos',
@@ -208,7 +305,6 @@ class _ProgressScreenState extends State<ProgressScreen> {
           },
         ),
         const SizedBox(height: 16),
-        // Botão Compartilhar Conquistas
         _buildActionButton(
           title: 'Compartilhar Conquistas',
           subtitle: 'Mostre seu progresso',
@@ -293,7 +389,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
           mainAxisSpacing: 16,
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          childAspectRatio: 0.8, // Para acomodar o ícone e o texto
+          childAspectRatio: 0.8,
           children: [
             _buildAchievementCard(
               'Primeiro Treino!',
@@ -362,7 +458,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Início'),
           BottomNavigationBarItem(
-            icon: Icon(Icons.trending_up), // Ícone de Progresso
+            icon: Icon(Icons.trending_up),
             label: 'Progresso',
           ),
           BottomNavigationBarItem(
@@ -383,7 +479,6 @@ class _ProgressScreenState extends State<ProgressScreen> {
         );
         break;
       case 1:
-        // Já está na tela de progresso
         break;
       case 2:
         ScaffoldMessenger.of(context).showSnackBar(
