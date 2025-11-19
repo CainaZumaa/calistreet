@@ -163,14 +163,32 @@ class WorkoutService {
 
       final response = await serviceClient
           .from('workouts')
-          .select('*, workout_exercises:workout_exercises(*)')
+          .select('''
+          *,
+          workout_exercises(
+            *,
+            exercises(
+              id,
+              name,
+              description,
+              muscle_group,
+              subgroup,
+              required_equipment,
+              video_url,
+              level
+            )
+          )
+        ''')
           .eq('id', workoutId)
           .single();
 
       Logger.info(
         'WorkoutService',
-        'Treino encontrado',
-        extra: {'workout_id': workoutId},
+        'Treino encontrado com exercícios',
+        extra: {
+          'workout_id': workoutId,
+          'exercises_count': (response['workout_exercises'] as List?)?.length ?? 0,
+        },
       );
       return response as Map<String, dynamic>?;
     } catch (e, stackTrace) {
