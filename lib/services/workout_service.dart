@@ -130,6 +130,7 @@ class WorkoutService {
       final List<dynamic> response = await serviceClient
           .from('workouts')
           .select('id, name')
+          .eq('created_by_id', userId)
           .limit(10);
 
       final workouts = response.cast<Map<String, dynamic>>();

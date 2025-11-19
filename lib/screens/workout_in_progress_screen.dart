@@ -3,6 +3,7 @@ import 'dart:async';
 import '../services/workout_service.dart';
 import '../services/progress_service.dart';
 import '../services/auth_service.dart';
+import 'home_screen.dart';
 
 // Cores baseadas no code.html e no padrão
 const Color primaryColor = Color(0xFF007AFF); // Azul padrão do projeto
@@ -10,6 +11,7 @@ const Color backgroundDark = Color(0xFF1A1A1A);
 const Color cardDark = Color(0xFF212121);
 const Color textDark = Color(0xFFFFFFFF);
 const Color subtextDark = Color(0xFFB0B0B0); // Cinza para subtexto
+const Color errorColor = Color(0xFFE53935);
 
 class WorkoutInProgressScreen extends StatefulWidget {
   final String workoutId;
@@ -33,7 +35,8 @@ class _WorkoutInProgressScreenState extends State<WorkoutInProgressScreen> {
   // Progress tracking
   String? _progressId;
   final ProgressService _progressService = ProgressService();
-  
+  final WorkoutService _workoutService = WorkoutService();
+
   // Calcula o progresso com base nos exercícios completados
   double get _overallProgress {
     if (_exercises.isEmpty) return 0.0;
@@ -118,16 +121,29 @@ class _WorkoutInProgressScreenState extends State<WorkoutInProgressScreen> {
   }
 
   void _loadWorkoutData() async {
-    final WorkoutService workoutService = WorkoutService();
-    final workoutData = await workoutService.fetchWorkoutById(widget.workoutId);
+    final userId = AuthService.currentUser?['user_id'];
+    if (userId == null) {
+      _showSnackbar('Usuário não logado.', isError: true);
+      Navigator.of(context).pop();
+      return;
+    }
+    
+    // Inicia a sessão no banco de dados
+    try {
+      final sessionId = await _progressService.startWorkoutProgress(
+        userId: userId as String,
+        workoutId: widget.workoutId,
+      );
+      _progressId = sessionId;
+      
+      final workoutData = await _workoutService.fetchWorkoutById(widget.workoutId);
 
-    if (mounted && workoutData != null) {
-      setState(() {
-        _workoutName = workoutData['name'] ?? 'Treino';
-        final exercisesJson =
-            workoutData['workout_exercises'] as List<dynamic>? ?? [];
-        _exercises = exercisesJson.map((item) {
-          // Acessa o objeto 'exercises' que vem do join
+      if (workoutData != null) {
+        setState(() {
+          _workoutName = workoutData['name'] ?? 'Treino Desconhecido';
+          final exercisesJson = workoutData['workout_exercises'] as List<dynamic>? ?? [];
+          
+          _exercises = exercisesJson.map((item) {
           final Map<String, dynamic>? exerciseDetails = item['exercises'] as Map<String, dynamic>?;
           
           return {
@@ -136,56 +152,51 @@ class _WorkoutInProgressScreenState extends State<WorkoutInProgressScreen> {
             'isCompleted': false,
           };
         }).toList();
+          _isLoading = false;
+        });
+      }
 
-        _isLoading = false;
-      });
-    } else if (mounted) {
-      setState(() {
-        _isLoading = false;
-      });
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Erro ao carregar treino.')));
+    } catch (e) {
+      _showSnackbar('Erro ao iniciar o treino: ${e.toString()}', isError: true);
+      Navigator.of(context).pop();
     }
   }
 
   /// Finaliza o treino e salva no banco
-  Future<void> _finishWorkout() async {
+  void _finishWorkout() async {
     if (_progressId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Erro: Treino não foi iniciado corretamente.')),
-      );
+      _showSnackbar('Treino não foi iniciado corretamente no sistema.', isError: true);
       return;
     }
+    
+    _timer?.cancel();
 
     try {
-      // Para o cronômetro definitivamente
-      _timer?.cancel();
-      _timer = null;
-      
-      // Salva o progresso no banco
       await _progressService.completeWorkoutProgress(
         progressId: _progressId!,
         durationSeconds: _elapsedSeconds,
         notes: 'Treino concluído com ${(_overallProgress * 100).toInt()}% dos exercícios completados',
       );
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Treino concluído com sucesso!'),
-            backgroundColor: primaryColor,
-          ),
-        );
-        Navigator.of(context).pop(); // Volta para a Home
-      }
+      
+      _showSnackbar('Treino concluído! Progresso salvo.', isError: false);
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (context) => const HomeScreen()),
+      );
+      
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Erro ao salvar progresso do treino.')),
-        );
-      }
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('Erro ao concluir o treino: ${e.toString()}'),
+      ));
     }
+  }
+  
+  void _showSnackbar(String message, {bool isError = false}) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: isError ? errorColor : primaryColor,
+      ),
+    );
   }
 
   @override
