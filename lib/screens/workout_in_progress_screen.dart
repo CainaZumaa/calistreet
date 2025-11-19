@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
 import '../services/workout_service.dart';
+import '../services/progress_service.dart';
+import '../services/auth_service.dart';
 
 // Cores baseadas no code.html e no padrão
 const Color primaryColor = Color(0xFF007AFF); // Azul padrão do projeto
@@ -18,20 +21,100 @@ class WorkoutInProgressScreen extends StatefulWidget {
 }
 
 class _WorkoutInProgressScreenState extends State<WorkoutInProgressScreen> {
-  // Simulação de estado do treino/cronômetro
+  // Cronômetro
   bool _isPaused = true;
-  final int _minutes = 1;
-  final int _seconds = 25;
-  final double _overallProgress = 1 / 3; // Simula 1 de 3 exercícios concluídos
-
+  int _elapsedSeconds = 0;
+  Timer? _timer;
+  
   List<Map<String, dynamic>> _exercises = [];
   String _workoutName = '';
   bool _isLoading = true;
+  
+  // Progress tracking
+  String? _progressId;
+  final ProgressService _progressService = ProgressService();
+  
+  // Calcula o progresso com base nos exercícios completados
+  double get _overallProgress {
+    if (_exercises.isEmpty) return 0.0;
+    final completed = _exercises.where((e) => e['isCompleted'] == true).length;
+    return completed / _exercises.length;
+  }
+  
+  // Formata tempo do cronômetro
+  int get _minutes => _elapsedSeconds ~/ 60;
+  int get _seconds => _elapsedSeconds % 60;
 
   @override
   void initState() {
     super.initState();
     _loadWorkoutData();
+    _startWorkout();
+  }
+  
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+  
+  /// Inicia o treino e registra no banco
+  Future<void> _startWorkout() async {
+    try {
+      final userId = AuthService.currentUser?['user_id'] as String?;
+      if (userId == null) return;
+      
+      _progressId = await _progressService.startWorkoutProgress(
+        userId: userId,
+        workoutId: widget.workoutId,
+      );
+      
+      // Inicia o cronômetro automaticamente
+      _startTimer();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Erro ao iniciar treino')),
+        );
+      }
+    }
+  }
+  
+  /// Inicia/resume o cronômetro
+  void _startTimer() {
+    // Cancela timer anterior se existir (evita múltiplos timers rodando)
+    _timer?.cancel();
+    
+    setState(() {
+      _isPaused = false;
+    });
+    
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (mounted) {
+        setState(() {
+          _elapsedSeconds++;
+        });
+      }
+    });
+  }
+  
+  /// Pausa o cronômetro
+  void _pauseTimer() {
+    _timer?.cancel();
+    _timer = null;
+    
+    setState(() {
+      _isPaused = true;
+    });
+  }
+  
+  /// Toggle entre play e pause
+  void _togglePause() {
+    if (_isPaused) {
+      _startTimer();
+    } else {
+      _pauseTimer();
+    }
   }
 
   void _loadWorkoutData() async {
@@ -44,15 +127,16 @@ class _WorkoutInProgressScreenState extends State<WorkoutInProgressScreen> {
         final exercisesJson =
             workoutData['workout_exercises'] as List<dynamic>? ?? [];
         _exercises = exercisesJson.map((item) {
-          final Map<String, dynamic>? exerciseDetails =
-              item['exercises'] as Map<String, dynamic>?;
+          // Acessa o objeto 'exercises' que vem do join
+          final Map<String, dynamic>? exerciseDetails = item['exercises'] as Map<String, dynamic>?;
+          
           return {
             'name': exerciseDetails?['name'] ?? 'Nome Desconhecido',
-            'details':
-                '${item['sets'] ?? 3} séries x ${item['repetitions'] ?? 10} repetições',
+            'details': '${item['sets'] ?? 3} séries x ${item['reps'] ?? 10} repetições',
             'isCompleted': false,
           };
         }).toList();
+
         _isLoading = false;
       });
     } else if (mounted) {
@@ -65,22 +149,43 @@ class _WorkoutInProgressScreenState extends State<WorkoutInProgressScreen> {
     }
   }
 
-  void _togglePause() {
-    setState(() {
-      _isPaused = !_isPaused;
-    });
-  }
+  /// Finaliza o treino e salva no banco
+  Future<void> _finishWorkout() async {
+    if (_progressId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Erro: Treino não foi iniciado corretamente.')),
+      );
+      return;
+    }
 
-  void _finishWorkout() {
-    // TODO: 1. Lógica de cálculo de calorias/tempo
-    // TODO: 2. Enviar dados de conclusão para o Supabase
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Treino concluído com sucesso!'),
-        backgroundColor: primaryColor,
-      ),
-    );
-    Navigator.of(context).pop(); // Volta para a Home
+    try {
+      // Para o cronômetro definitivamente
+      _timer?.cancel();
+      _timer = null;
+      
+      // Salva o progresso no banco
+      await _progressService.completeWorkoutProgress(
+        progressId: _progressId!,
+        durationSeconds: _elapsedSeconds,
+        notes: 'Treino concluído com ${(_overallProgress * 100).toInt()}% dos exercícios completados',
+      );
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Treino concluído com sucesso!'),
+            backgroundColor: primaryColor,
+          ),
+        );
+        Navigator.of(context).pop(); // Volta para a Home
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Erro ao salvar progresso do treino.')),
+        );
+      }
+    }
   }
 
   @override
