@@ -2,9 +2,11 @@ import 'package:calistreet/models/progress.dart';
 import 'package:calistreet/services/auth_service.dart';
 import 'package:calistreet/utils/logger.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:uuid/uuid.dart';
 
 class ProgressService {
-  final SupabaseClient _client = AuthService.client;
+  final SupabaseClient _client = AuthService.createServiceRoleClient();
+  final Uuid _uuid = const Uuid();
 
   Future<List<Progress>> getProgressForUser(String userId) async {
     try {
@@ -103,34 +105,18 @@ class ProgressService {
     required String userId,
     required String workoutId,
   }) async {
+    final sessionId = _uuid.v4();
     try {
-      final response = await _client
-          .from('progress')
-          .insert({
-            'user_id': userId,
-            'workout_id': workoutId,
-            'start_date': DateTime.now().toIso8601String(),
-            'status': 'IN_PROGRESS',
-          })
-          .select('id')
-          .single();
-
-      final progressId = response['id'] as String;
-      
-      Logger.info(
-        'ProgressService',
-        'Progresso iniciado com sucesso',
-        extra: {'progress_id': progressId, 'workout_id': workoutId},
-      );
-      
-      return progressId;
+      await _client.from('progress').insert({
+        'id': sessionId,
+        'user_id': userId,
+        'workout_id': workoutId,
+        'start_date': DateTime.now().toIso8601String(),
+        'status': 'EM_ANDAMENTO',
+      });
+      return sessionId; // Retorna o ID da sessão criada
     } catch (e) {
-      Logger.error(
-        'ProgressService',
-        'Erro ao iniciar progresso',
-        error: e,
-      );
-      rethrow;
+      throw Exception('Falha ao iniciar a sessão de treino: ${e.toString()}');
     }
   }
 
@@ -141,28 +127,17 @@ class ProgressService {
     String? notes,
   }) async {
     try {
-      await _client
-          .from('progress')
+      final now = DateTime.now().toIso8601String();
+      await _client.from('progress')
           .update({
-            'end_date': DateTime.now().toIso8601String(),
+            'end_date': now,
             'duration_seconds': durationSeconds,
-            'status': 'COMPLETED',
+            'status': 'CONCLUIDO',
             if (notes != null) 'notes': notes,
           })
           .eq('id', progressId);
-
-      Logger.info(
-        'ProgressService',
-        'Progresso concluído com sucesso',
-        extra: {'progress_id': progressId, 'duration': durationSeconds},
-      );
     } catch (e) {
-      Logger.error(
-        'ProgressService',
-        'Erro ao concluir progresso',
-        error: e,
-      );
-      rethrow;
+      throw Exception('Falha ao concluir a sessão de treino: ${e.toString()}');
     }
   }
 
@@ -195,4 +170,47 @@ class ProgressService {
       rethrow;
     }
   }
+
+  // Função para contar treinos concluídos pelo usuário
+  Future<int> countCompletedWorkouts(String userId) async {
+    try {
+      final serviceClient = AuthService.createServiceRoleClient();
+
+      final response = await serviceClient.from('progress')
+          .select('id')
+          .eq('user_id', userId)
+          .eq('status', 'CONCLUIDO');
+
+      if (response is List) {
+        return response.length;
+      }
+      return 0;
+    } catch (e) {
+      print('ProgressService Erro ao contar treinos: $e');
+      return 0;
+    }
+  }
+
+  // Função para buscar a duração total (em segundos) de todos os treinos concluídos
+Future<int> fetchTotalDuration(String userId) async {
+  try {
+    final serviceClient = AuthService.createServiceRoleClient();
+    
+    final List<dynamic> response = (await serviceClient.from('progress')
+        .select('sum(duration_seconds)')
+        .eq('user_id', userId)
+        .eq('status', 'CONCLUIDO')
+        .single()) as List;
+        
+    final Map<String, dynamic> aggregate = response.first as Map<String, dynamic>;
+    
+    final int totalSeconds = aggregate['sum'] as int? ?? 0;
+    
+    return totalSeconds;
+    
+  } catch (e) {
+    print('ProgressService Erro ao buscar duração total: $e');
+    return 0;
+  }
+}
 }

@@ -2,6 +2,7 @@ import 'package:calistreet/screens/home_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../services/auth_service.dart';
+import '../services/progress_service.dart';
 import 'progress_screen.dart';
 
 // Definindo cores comuns para consistência
@@ -15,15 +16,31 @@ class ProfileScreen extends StatefulWidget {
   State<ProfileScreen> createState() => _ProfileScreenState();
 }
 
+String formatSecondsToHoursMinutes(int totalSeconds) {
+  final hours = totalSeconds ~/ 3600;
+  final minutes = (totalSeconds % 3600) ~/ 60;
+  
+  if (hours > 0) {
+    return '${hours}h ${minutes}m';
+  } else if (minutes > 0) {
+    return '${minutes}m';
+  } else {
+    return '< 1m';
+  }
+}
+
 class _ProfileScreenState extends State<ProfileScreen> {
   final int _selectedIndex = 3;
   Map<String, dynamic>? _userProfile;
   bool _isLoading = true;
+  int _completedWorkoutsCount = 0;
+  String _totalDurationFormatted = '0h 0m';
 
   @override
   void initState() {
     super.initState();
     _loadProfileData();
+    _loadWorkoutStats();
   }
 
   void _loadProfileData() async {
@@ -42,6 +59,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
         _isLoading = false;
       });
     }
+  }
+
+  void _loadWorkoutStats() async {
+    final userId = AuthService.currentUser?['user_id'];
+    if (userId == null) {
+        setState(() { _isLoading = false; });
+        return;
+    }
+    
+    final ProgressService progressService = ProgressService();
+    final int count = await progressService.countCompletedWorkouts(userId as String);
+    final int durationSeconds = await progressService.fetchTotalDuration(userId as String);
+
+    setState(() {
+      _completedWorkoutsCount = count;
+      _totalDurationFormatted = formatSecondsToHoursMinutes(durationSeconds);
+      _isLoading = false;
+    });
   }
 
   // Função placeholder para alterar foto
@@ -166,7 +201,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
         const SizedBox(height: 8),
         Text(
-          'Membro desde 2024',
+          'Membro desde 2025',
           style: const TextStyle(color: Colors.grey, fontSize: 14),
         ),
       ],
@@ -174,17 +209,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _buildStatsSection() {
-    final int workouts = _userProfile?['workouts_completed'] ?? 150;
     final int calories = _userProfile?['calories_burned'] ?? 2500;
-    final String time = _userProfile?['total_time'] ?? '30h';
 
     return Row(
       children: [
-        Expanded(child: _buildStatCard(workouts.toString(), 'Treinos')),
+        Expanded(child: _buildStatCard(_completedWorkoutsCount.toString(), 'Treinos')),        const SizedBox(width: 12),
         const SizedBox(width: 12),
         Expanded(child: _buildStatCard(calories.toString(), 'Calorias')),
         const SizedBox(width: 12),
-        Expanded(child: _buildStatCard(time, 'Tempo')),
+        Expanded(child: _buildStatCard(_totalDurationFormatted, 'Tempo')),
       ],
     );
   }
