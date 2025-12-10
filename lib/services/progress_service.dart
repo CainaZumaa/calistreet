@@ -36,11 +36,7 @@ class ProgressService {
       await _client.from('progress').insert(progress.toJson());
     } catch (e) {
       // Handle or rethrow the exception as needed
-      Logger.error(
-        'ProgressService',
-        'Erro ao adicionar progresso',
-        error: e,
-      );
+      Logger.error('ProgressService', 'Erro ao adicionar progresso', error: e);
       rethrow;
     }
   }
@@ -49,7 +45,7 @@ class ProgressService {
   Future<List<Progress>> getLast7DaysProgress(String userId) async {
     try {
       final sevenDaysAgo = DateTime.now().subtract(const Duration(days: 7));
-      
+
       final response = await _client
           .from('progress')
           .select('*')
@@ -76,7 +72,9 @@ class ProgressService {
     try {
       final now = DateTime.now();
       final startOfWeek = now.subtract(Duration(days: now.weekday - 1));
-      final endOfWeek = startOfWeek.add(const Duration(days: 6, hours: 23, minutes: 59, seconds: 59));
+      final endOfWeek = startOfWeek.add(
+        const Duration(days: 6, hours: 23, minutes: 59, seconds: 59),
+      );
 
       final response = await _client
           .from('progress')
@@ -112,7 +110,7 @@ class ProgressService {
         'user_id': userId,
         'workout_id': workoutId,
         'start_date': DateTime.now().toIso8601String(),
-        'status': 'EM_ANDAMENTO',
+        'status': 'IN_PROGRESS',
       });
       return sessionId; // Retorna o ID da sessão criada
     } catch (e) {
@@ -128,11 +126,12 @@ class ProgressService {
   }) async {
     try {
       final now = DateTime.now().toIso8601String();
-      await _client.from('progress')
+      await _client
+          .from('progress')
           .update({
             'end_date': now,
             'duration_seconds': durationSeconds,
-            'status': 'CONCLUIDO',
+            'status': 'COMPLETED',
             if (notes != null) 'notes': notes,
           })
           .eq('id', progressId);
@@ -162,11 +161,7 @@ class ProgressService {
         extra: {'progress_id': progressId},
       );
     } catch (e) {
-      Logger.error(
-        'ProgressService',
-        'Erro ao cancelar progresso',
-        error: e,
-      );
+      Logger.error('ProgressService', 'Erro ao cancelar progresso', error: e);
       rethrow;
     }
   }
@@ -176,15 +171,13 @@ class ProgressService {
     try {
       final serviceClient = AuthService.createServiceRoleClient();
 
-      final response = await serviceClient.from('progress')
+      final response = await serviceClient
+          .from('progress')
           .select('id')
           .eq('user_id', userId)
-          .eq('status', 'CONCLUIDO');
+          .eq('status', 'COMPLETED');
 
-      if (response is List) {
-        return response.length;
-      }
-      return 0;
+      return response.length;
     } catch (e) {
       print('ProgressService Erro ao contar treinos: $e');
       return 0;
@@ -192,25 +185,28 @@ class ProgressService {
   }
 
   // Função para buscar a duração total (em segundos) de todos os treinos concluídos
-Future<int> fetchTotalDuration(String userId) async {
-  try {
-    final serviceClient = AuthService.createServiceRoleClient();
-    
-    final List<dynamic> response = (await serviceClient.from('progress')
-        .select('sum(duration_seconds)')
-        .eq('user_id', userId)
-        .eq('status', 'CONCLUIDO')
-        .single()) as List;
-        
-    final Map<String, dynamic> aggregate = response.first as Map<String, dynamic>;
-    
-    final int totalSeconds = aggregate['sum'] as int? ?? 0;
-    
-    return totalSeconds;
-    
-  } catch (e) {
-    print('ProgressService Erro ao buscar duração total: $e');
-    return 0;
+  Future<int> fetchTotalDuration(String userId) async {
+    try {
+      final serviceClient = AuthService.createServiceRoleClient();
+
+      final List<dynamic> response =
+          (await serviceClient
+                  .from('progress')
+                  .select('sum(duration_seconds)')
+                  .eq('user_id', userId)
+                  .eq('status', 'CONCLUIDO')
+                  .single())
+              as List;
+
+      final Map<String, dynamic> aggregate =
+          response.first as Map<String, dynamic>;
+
+      final int totalSeconds = aggregate['sum'] as int? ?? 0;
+
+      return totalSeconds;
+    } catch (e) {
+      print('ProgressService Erro ao buscar duração total: $e');
+      return 0;
+    }
   }
-}
 }
