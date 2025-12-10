@@ -1,5 +1,6 @@
 import 'dart:collection';
 
+import 'package:calistreet/models/achievement.dart';
 import 'package:calistreet/models/progress.dart';
 import 'package:calistreet/screens/home_screen.dart';
 import 'package:calistreet/services/auth_service.dart';
@@ -9,6 +10,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
 
 import 'profile_screen.dart';
+import 'workout_history_screen.dart';
 
 // Cores no padrão do seu app
 const Color primaryColor = Color(
@@ -42,11 +44,14 @@ class _ProgressScreenState extends State<ProgressScreen> {
   Map<String, double> _weeklyData = {};
   int _totalWorkouts = 0;
   String _totalTime = "0h 0m";
+  List<Achievement> _latestAchievements = [];
+
 
   @override
   void initState() {
     super.initState();
     _initScreen();
+    _loadLatestAchievements();
   }
 
   Future<void> _initScreen() async {
@@ -301,7 +306,9 @@ class _ProgressScreenState extends State<ProgressScreen> {
           icon: Icons.history,
           iconColor: primaryColor,
           onTap: () {
-            /* TODO: Navegar para Histórico */
+            Navigator.of(context).push(
+              MaterialPageRoute(builder: (context) => const WorkoutHistoryScreen()),
+            );
           },
         ),
         const SizedBox(height: 16),
@@ -383,31 +390,26 @@ class _ProgressScreenState extends State<ProgressScreen> {
             ),
           ),
         ),
-        GridView.count(
-          crossAxisCount: 3,
-          crossAxisSpacing: 16,
-          mainAxisSpacing: 16,
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          childAspectRatio: 0.8,
-          children: [
-            _buildAchievementCard(
-              'Primeiro Treino!',
-              Icons.military_tech,
-              secondaryColor,
-            ),
-            _buildAchievementCard(
-              '10 Horas de Treino',
-              Icons.timer,
-              secondaryColor,
-            ),
-            _buildAchievementCard(
-              'Mestre das Flexões',
-              Icons.fitness_center,
-              secondaryColor,
-            ),
-          ],
-        ),
+        _latestAchievements.isEmpty
+            ? const Text(
+                "Nenhuma conquista desbloqueada ainda.",
+                style: TextStyle(color: subtextDark),
+              )
+            : GridView.count(
+                crossAxisCount: 3,
+                crossAxisSpacing: 16,
+                mainAxisSpacing: 16,
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                childAspectRatio: 0.8,
+                children: _latestAchievements.map((a) {
+                  return _buildAchievementCard(
+                    a.name,
+                    _mapIcon(a.iconName),
+                    secondaryColor,
+                  );
+                }).toList(),
+              ),
       ],
     );
   }
@@ -493,6 +495,42 @@ class _ProgressScreenState extends State<ProgressScreen> {
           MaterialPageRoute(builder: (context) => const ProfileScreen()),
         );
         break;
+    }
+  }
+
+  Future<void> _loadLatestAchievements() async {
+    try {
+      final userId = AuthService.currentUser?['user_id'] as String?;
+      if (userId == null) return;
+
+      final achievements = await _progressService.getUserAchievements(userId);
+
+      // Filtra apenas desbloqueadas e pega as 3 últimas
+      final unlocked = achievements
+          .where((a) => a.isUnlocked)
+          .toList()
+        ..sort((a, b) => b.currentValue!.compareTo(a.currentValue!)); // Ou use outra métrica de ordem
+
+      setState(() {
+        _latestAchievements = unlocked.take(3).toList();
+      });
+    } catch (e) {
+      debugPrint("Erro ao carregar últimas conquistas: $e");
+    }
+  }
+
+  IconData _mapIcon(String? iconName) {
+    switch (iconName) {
+      case "pushup":
+        return Icons.fitness_center;
+      case "run":
+        return Icons.directions_run;
+      case "abs":
+        return Icons.accessibility_new;
+      case "trophy":
+        return Icons.emoji_events;
+      default:
+        return Icons.emoji_events;
     }
   }
 }
