@@ -145,7 +145,7 @@ class _WorkoutInProgressScreenState extends State<WorkoutInProgressScreen> {
           
           return {
             'name': exerciseDetails?['name'] ?? 'Nome Desconhecido',
-            'details': '${item['sets'] ?? 3} séries x ${item['reps'] ?? 10} repetições',
+            'details': '${item['sets'] ?? 3} séries x ${item['repetitions'] ?? 10} repetições',
             'isCompleted': false,
           };
         }).toList();

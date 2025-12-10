@@ -74,8 +74,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
     
     final ProgressService progressService = ProgressService();
-    final int count = await progressService.countCompletedWorkouts(userId as String);
-    final int durationSeconds = await progressService.fetchTotalDuration(userId as String);
+    final int count = await progressService.countCompletedWorkouts(userId);
+    final int durationSeconds = await progressService.fetchTotalDuration(userId);
 
     setState(() {
       _completedWorkoutsCount = count;
@@ -214,13 +214,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _buildStatsSection() {
-    final int calories = _userProfile?['calories_burned'] ?? 2500;
-
     return Row(
       children: [
         Expanded(child: _buildStatCard(_completedWorkoutsCount.toString(), 'Treinos')),        const SizedBox(width: 12),
-        const SizedBox(width: 12),
-        Expanded(child: _buildStatCard(calories.toString(), 'Calorias')),
         const SizedBox(width: 12),
         Expanded(child: _buildStatCard(_totalDurationFormatted, 'Tempo')),
       ],

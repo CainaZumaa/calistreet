@@ -214,28 +214,13 @@ class ProgressService {
 
   // Função para buscar a duração total (em segundos) de todos os treinos concluídos
   Future<int> fetchTotalDuration(String userId) async {
-    try {
-      final serviceClient = AuthService.createServiceRoleClient();
-
-      final List<dynamic> response =
-          (await serviceClient
-                  .from('progress')
-                  .select('sum(duration_seconds)')
-                  .eq('user_id', userId)
-                  .eq('status', 'CONCLUIDO')
-                  .single())
-              as List;
-
-      final Map<String, dynamic> aggregate =
-          response.first as Map<String, dynamic>;
-
-      final int totalSeconds = aggregate['sum'] as int? ?? 0;
-
-      return totalSeconds;
-    } catch (e) {
-      print('ProgressService Erro ao buscar duração total: $e');
-      return 0;
-    }
+    final List<Progress> allProgress = await getAllUserProgress(userId);
+    
+    int totalSeconds = allProgress
+        .where((p) => p.status == ProgressStatus.completed && p.durationSeconds != null)
+        .fold(0, (sum, p) => sum + p.durationSeconds!);
+    
+    return totalSeconds;
   }
 
   // NOVO: Busca o histórico de sessões concluídas para exibição
@@ -357,5 +342,19 @@ class ProgressService {
     return await Future.wait(futures);
   }
 
+  Future<List<Progress>> getAllUserProgress(String userId) async {
+    final supabase = AuthService.createServiceRoleClient();
 
+    try {
+      final List<Map<String, dynamic>> data = await supabase
+          .from('progress')
+          .select()
+          .eq('user_id', userId);
+
+      return data.map((json) => Progress.fromJson(json)).toList();
+    } catch (e) {
+      print('Erro ao buscar todos os progressos: $e');
+      return [];
+    }
+  }
 }
