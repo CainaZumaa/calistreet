@@ -29,12 +29,12 @@ class _EquipmentSelectionScreenState extends State<EquipmentSelectionScreen> {
 
   // Lista de opções de equipamentos
   final List<Map<String, dynamic>> _equipmentOptions = [
-    {'label': 'Barra de porta', 'icon': Icons.drag_handle},
-    {'label': 'Elásticos', 'icon': Symbols.fitness_center},
-    {'label': 'Paralelas', 'icon': Symbols.polyline},
+    {'label': 'Barra de porta', 'icon': Symbols.horizontal_rule},
+    {'label': 'Elásticos', 'icon': Symbols.laps},
+    {'label': 'Paralelas', 'icon': Symbols.cadence},
     {'label': 'Argolas', 'icon': Icons.radio_button_unchecked},
-    {'label': 'Corda', 'icon': Icons.mediation_sharp},
-    {'label': 'Halteres', 'icon': Symbols.sports_gymnastics},
+    {'label': 'Corda', 'icon': Symbols.cable},
+    {'label': 'Halteres', 'icon': Symbols.fitness_center},
   ];
 
   @override
