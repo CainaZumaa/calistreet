@@ -157,16 +157,13 @@ class _LoginScreenState extends State<LoginScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // App Branding
-              const Text(
-                'Calistreet',
-                style: TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
+               // Logo
+              Image.asset(
+                'assets/images/logo.png',
+                height: 280, // ajuste a altura como preferir
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 16),
+
               Text(
                 _isSignUp
                     ? 'Insira seus dados para começar.'
@@ -235,7 +232,7 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
               const SizedBox(height: 32),
 
-              // Social Login Separator
+              /* Social Login Separator
               Row(
                 children: [
                   const Expanded(child: Divider(color: Colors.grey)),
@@ -271,7 +268,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ],
               ),
-              const SizedBox(height: 32),
+              const SizedBox(height: 32),*/
 
               // Toggle Login/Signup
               Row(
