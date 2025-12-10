@@ -1,9 +1,12 @@
 import 'package:calistreet/screens/home_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import '../models/achievement.dart';
 import '../services/auth_service.dart';
 import '../services/progress_service.dart';
 import 'progress_screen.dart';
+import 'package:calistreet/screens/achievements_screen.dart';
+
 
 // Definindo cores comuns para consistência
 const Color backgroundDark = Color(0xFF000000);
@@ -35,12 +38,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
   bool _isLoading = true;
   int _completedWorkoutsCount = 0;
   String _totalDurationFormatted = '0h 0m';
+  List<Achievement> _achievements = [];
 
   @override
   void initState() {
     super.initState();
     _loadProfileData();
     _loadWorkoutStats();
+    _loadAchievements();
   }
 
   void _loadProfileData() async {
@@ -250,42 +255,58 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Conquistas',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-          ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text(
+              'Conquistas',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+
+            IconButton(
+              icon: const Icon(Icons.arrow_forward_ios, color: Colors.white70),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const AchievementsScreen()),
+                );
+              },
+            ),
+          ],
         ),
+
         const SizedBox(height: 16),
-        SizedBox(
-          height: 80,
-          child: ListView(
-            scrollDirection: Axis.horizontal,
-            children: [
-              _buildAchievementBadge('Iniciante', Icons.eco, primaryBlue),
-              const SizedBox(width: 16),
-              _buildAchievementBadge(
-                'Intermediário',
-                Icons.person,
-                Colors.grey,
-              ),
-              const SizedBox(width: 16),
-              _buildAchievementBadge(
-                'Avançado',
-                Icons.fitness_center,
-                Colors.grey,
-              ),
-              const SizedBox(width: 16),
-              _buildAchievementBadge(
-                'Expert',
-                FontAwesomeIcons.trophy,
-                Colors.grey,
-              ),
-            ],
+
+        // Caso não tenha conquistas
+        if (_achievements.isEmpty)
+          const Text(
+            'Nenhuma conquista desbloqueada ainda.',
+            style: TextStyle(color: Colors.grey, fontSize: 14),
           ),
-        ),
+
+        // Mostra até 4 conquistas
+        if (_achievements.isNotEmpty)
+          SizedBox(
+            height: 80,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: _achievements.length.clamp(0, 4),
+              separatorBuilder: (_, __) => const SizedBox(width: 16),
+              itemBuilder: (context, index) {
+                final a = _achievements[index];
+
+                return _buildAchievementBadge(
+                  a.name,
+                  _getAchievementIcon(a.iconName),
+                  a.isUnlocked ? primaryBlue : Colors.grey,
+                );
+              },
+            ),
+          ),
       ],
     );
   }
@@ -303,7 +324,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
           child: Icon(icon, color: color, size: 24),
         ),
         const SizedBox(height: 8),
-        Text(title, style: const TextStyle(color: Colors.white, fontSize: 12)),
+        SizedBox(
+          width: 60,
+          child: Text(
+            title,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+            style: const TextStyle(color: Colors.white, fontSize: 12),
+          ),
+        ),
       ],
     );
   }
@@ -388,6 +418,29 @@ class _ProfileScreenState extends State<ProfileScreen> {
       case 3:
         // Já está na tela de perfil
         break;
+    }
+  }
+
+  void _loadAchievements() async {
+    final userId = AuthService.currentUser?['user_id'];
+
+    if (userId == null) return;
+
+    final ProgressService progress = ProgressService();
+    final list = await progress.getUserAchievements(userId);
+
+    setState(() {
+      _achievements = list;
+    });
+  }
+
+  IconData _getAchievementIcon(String iconName) {
+    switch (iconName) {
+      case 'beginner': return Icons.eco;
+      case 'intermediate': return Icons.person;
+      case 'advanced': return Icons.fitness_center;
+      case 'expert': return FontAwesomeIcons.trophy;
+      default: return Icons.emoji_events;
     }
   }
 }
