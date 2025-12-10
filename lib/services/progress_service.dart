@@ -1,8 +1,11 @@
 import 'package:calistreet/models/progress.dart';
 import 'package:calistreet/services/auth_service.dart';
 import 'package:calistreet/utils/logger.dart';
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
+
+import '../models/achievement.dart';
 
 class ProgressService {
   final SupabaseClient _client = AuthService.createServiceRoleClient();
@@ -126,15 +129,40 @@ class ProgressService {
   }) async {
     try {
       final now = DateTime.now().toIso8601String();
-      await _client
+
+      // 1. Atualiza o progresso da sessão para COMPLETED
+      await _client.from('progress').update({
+        'end_date': now,
+        'duration_seconds': durationSeconds,
+        'status': 'COMPLETED',
+        if (notes != null) 'notes': notes,
+      }).eq('id', progressId);
+
+      // 2. Busca o progress para pegar o workout_id
+      final progressData = await _client
           .from('progress')
-          .update({
-            'end_date': now,
-            'duration_seconds': durationSeconds,
-            'status': 'COMPLETED',
-            if (notes != null) 'notes': notes,
-          })
-          .eq('id', progressId);
+          .select('workout_id')
+          .eq('id', progressId)
+          .single();
+
+      final workoutId = progressData['workout_id'] as String;
+
+      // 3. Busca todos os exercícios do treino
+      final workoutExercises = await _client
+          .from('workout_exercises')
+          .select('*')
+          .eq('workout_id', workoutId);
+
+      // 4. Insere os exercícios na tabela progress_exercises
+      for (final we in workoutExercises) {
+        await _client.from('progress_exercises').insert({
+          'progress_id': progressId,
+          'exercise_id': we['exercise_id'],
+          'sets_completed': we['sets'],
+          'repetitions_completed': we['sets'] * we['repetitions'],
+        });
+      }
+
     } catch (e) {
       throw Exception('Falha ao concluir a sessão de treino: ${e.toString()}');
     }
@@ -209,4 +237,125 @@ class ProgressService {
       return 0;
     }
   }
+
+  // NOVO: Busca o histórico de sessões concluídas para exibição
+  Future<List<Map<String, dynamic>>> getWorkoutHistory(String userId) async {
+    try {
+      final serviceClient = AuthService.createServiceRoleClient(); 
+
+      // Busca sessões CONCLUIDAS na tabela 'progress'
+      // Faz JOIN com a tabela 'workouts' para obter o nome do treino.
+      final List<dynamic> response = await serviceClient.from('progress')
+          .select('*, workouts(name)') // Pega o nome do treino aninhado
+          .eq('user_id', userId)
+          .order('start_date', ascending: false) // Mais recente primeiro
+          .limit(20); // Limita para agilidade
+
+      // Mapeia a resposta e extrai o nome do treino
+      return response.map((data) {
+        final workoutName = (data['workouts'] as Map<String, dynamic>?)?['name'] ?? 'Treino Excluído';
+        
+        return {
+          'id': data['id'],
+          'workout_name': workoutName,
+          'date': DateTime.parse(data['start_date'] as String), // Converte para DateTime
+          'duration': data['duration_seconds'],
+          'status': data['status'],
+        };
+      }).toList();
+      
+    } catch (e) {
+      print('ProgressService Erro ao buscar histórico: $e');
+      return []; 
+    }
+  }
+
+  Future<List<String>> checkAchievements(String userId) async {
+    final supabase = AuthService.createServiceRoleClient();
+
+    final achievementsResponse = await supabase
+        .from('achievements')
+        .select('*');
+
+    final unlockedIds = <String>[];
+
+    for (final json in achievementsResponse) {
+      final achievement = Achievement.fromJson(json, isUnlocked: false);
+
+      final rpc = await supabase.rpc('sum_user_reps', params: {
+        'user_id_param': userId,
+        'exercise_id_param': achievement.targetExerciseId,
+      });
+
+      final int totalReps = ((rpc?['total'] ?? 0) as num).toInt();
+
+      if (totalReps >= achievement.thresholdCount) {
+        final alreadyUnlocked = await supabase
+            .from('user_achievements')
+            .select()
+            .eq('user_id', userId)
+            .eq('achievement_id', achievement.id)
+            .maybeSingle();
+
+        if (alreadyUnlocked == null) {
+          await supabase.from('user_achievements').insert({
+            'user_id': userId,
+            'achievement_id': achievement.id,
+          });
+        }
+
+        unlockedIds.add(achievement.id);
+      }
+    }
+
+    return unlockedIds;
+  }
+
+  Future<List<Achievement>> getUserAchievements(String userId) async {
+    final supabase = AuthService.createServiceRoleClient();
+
+    final achievementRows = await supabase.from('achievements').select('*');
+
+    final unlockedRows = await supabase
+        .from('user_achievements')
+        .select('achievement_id')
+        .eq('user_id', userId);
+
+    final unlockedIds = unlockedRows.map((e) => e['achievement_id']).toSet();
+
+    // Paraleliza as RPCs
+    final futures = achievementRows.map((json) async {
+      final achId = json['id'] as String;
+      final exerciseId = json['target_exercise_id'] as String?;
+
+      int totalReps = 0;
+      if (exerciseId != null) {
+        try {
+          final rpc = await supabase.rpc(
+            'sum_user_reps',
+            params: {
+              'user_id_param': userId,
+              'exercise_id_param': exerciseId,
+            },
+          );
+          totalReps = (rpc as int?) ?? 0;
+        } catch (e) {
+          totalReps = 0;
+          debugPrint('Erro na RPC sum_user_reps para $achId: $e');
+        }
+      }
+
+      return Achievement.fromJson(
+        json,
+        isUnlocked: unlockedIds.contains(achId) || totalReps >= (json['threshold_count'] as int? ?? 0),
+      ).copyWith(
+        currentValue: totalReps,
+        targetValue: json['threshold_count'] as int? ?? 0,
+      );
+    });
+
+    return await Future.wait(futures);
+  }
+
+
 }

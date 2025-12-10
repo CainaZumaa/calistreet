@@ -348,9 +348,8 @@ class _ExerciseLibraryScreenState extends State<ExerciseLibraryScreen> {
 
           // Botão Favorito/Adicionar
           IconButton(
-            icon: const Icon(Icons.star_border, color: textDark),
+            icon: const Icon(Icons.add_circle_outline, color: textDark),
             onPressed: () {
-              // TODO: Implementar lógica de Favorito ou Adicionar ao Treino
               Navigator.of(
                 context,
               ).pop(exercise); // Retorna o exercício selecionado
