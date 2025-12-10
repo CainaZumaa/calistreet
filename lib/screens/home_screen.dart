@@ -6,6 +6,7 @@ import 'profile_screen.dart';
 import 'progress_screen.dart';
 import 'workout_in_progress_screen.dart';
 import 'my_workouts_screen.dart';
+import 'exercise_library_screen.dart';
 import 'package:intl/intl.dart';
 import '../services/workout_service.dart';
 import '../utils/logger.dart';
@@ -108,9 +109,11 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: AppBar(
         backgroundColor: const Color(0xFF000000),
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.menu, color: Colors.white),
-          onPressed: () {},
+        leading: Builder(
+          builder: (context) => IconButton(
+            icon: const Icon(Icons.menu, color: Colors.white),
+            onPressed: () => Scaffold.of(context).openDrawer(),
+          ),
         ),
         title: Text(
           _welcomeMessage,
@@ -153,6 +156,30 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
       bottomNavigationBar: _buildBottomNavigation(),
+      drawer: Drawer(
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: [
+            const DrawerHeader(
+              decoration: BoxDecoration(color: Colors.blueAccent),
+              child: Text(
+                'Menu',
+                style: TextStyle(color: Colors.white, fontSize: 24),
+              ),
+            ),
+            ListTile(
+              leading: const Icon(Icons.fitness_center),
+              title: const Text('Biblioteca de Exercícios'),
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                      builder: (context) => const ExerciseLibraryScreen()),
+                );
+              },
+            ),
+          ],
+        ),
+      ),
     );
   }
 

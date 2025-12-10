@@ -71,9 +71,6 @@ class _WorkoutInProgressScreenState extends State<WorkoutInProgressScreen> {
         userId: userId,
         workoutId: widget.workoutId,
       );
-      
-      // Inicia o cronômetro automaticamente
-      _startTimer();
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
