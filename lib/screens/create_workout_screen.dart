@@ -41,6 +41,15 @@ class _CreateWorkoutScreenState extends State<CreateWorkoutScreen> {
   ];
   List<String> _selectedDays = [];
 
+  // Mapeamento de níveis (backend -> frontend)
+  final Map<String, String> _levelMap = {
+    'beginner': 'Iniciante',
+    'intermediate': 'Intermediário',
+    'advanced': 'Avançado',
+  };
+  
+  String? _selectedLevel;
+
   @override
   void initState() {
     super.initState();
@@ -215,9 +224,10 @@ class _CreateWorkoutScreenState extends State<CreateWorkoutScreen> {
                       children: [
                         _buildNameInput(),
                         const SizedBox(height: 24),
+                        _buildLevelInput(),
+                        const SizedBox(height: 24),
                         _buildDaySelector(),
                         const SizedBox(height: 24),
-
                         _exercises.isEmpty
                             ? _buildEmptyState()
                             : Column(
@@ -357,6 +367,57 @@ class _CreateWorkoutScreenState extends State<CreateWorkoutScreen> {
               hintStyle: TextStyle(color: subtextDark),
               contentPadding: const EdgeInsets.symmetric(horizontal: 16),
               border: InputBorder.none,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildLevelInput() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Padding(
+          padding: EdgeInsets.only(bottom: 8.0),
+          child: Text(
+            'Nível de Dificuldade',
+            style: TextStyle(color: textDark, fontWeight: FontWeight.w500),
+          ),
+        ),
+        Container(
+          height: 56,
+          decoration: BoxDecoration(
+            color: cardDark.withOpacity(0.4),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: borderDark),
+          ),
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<String>(
+              value: _selectedLevel,
+              hint: Text(
+                'Selecione o nível',
+                style: TextStyle(color: subtextDark, fontSize: 16),
+              ),
+              isExpanded: true,
+              icon: const Icon(Icons.arrow_drop_down, color: textDark),
+              dropdownColor: cardDark,
+              style: const TextStyle(color: textDark, fontSize: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              items: _levelMap.entries.map((entry) {
+                return DropdownMenuItem<String>(
+                  value: entry.key, // Valor do backend (beginner, intermediate, etc)
+                  child: Text(
+                    entry.value, // Texto em português (Iniciante, Intermediário, etc)
+                    style: const TextStyle(color: textDark),
+                  ),
+                );
+              }).toList(),
+              onChanged: (String? newValue) {
+                setState(() {
+                  _selectedLevel = newValue;
+                });
+              },
             ),
           ),
         ),
